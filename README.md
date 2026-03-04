@@ -1,4 +1,4 @@
-# 🛡️ GlitchZero v6 — AI-Native Trust Infrastructure (PostgreSQL Edition)
+# 🛡️ GlitchZero v6 — AI-Native Trust Infrastructure (Production Deployment)
 
 > Research-grade audit anchoring system with hybrid anomaly detection,  
 > PostgreSQL-backed blockchain verifiability, SHAP-style XAI attribution,  
@@ -8,23 +8,44 @@ Zero-setup · language-agnostic API · SCOPUS-publication-ready metrics.
 
 ---
 
-## 🚀 Version 6 Upgrade — Postgres + Neon Architecture
+# 🌍 Live Production Deployment
 
-GlitchZero v6 migrates from SQLite to **PostgreSQL (Neon Cloud DB)**  
-while preserving the full dashboard UI and research endpoints.
+GlitchZero v6 is now deployed in production:
 
-### Key Enhancements
+**🔗 Public URL:**  
+https://glitchzero.onrender.com  
 
-- ✅ Migrated to **PostgreSQL (Neon DB)** using native `pg` driver
-- ✅ Node.js 24 optimized runtime (ESM + Top-Level Await)
-- ✅ Drizzle ORM with automated schema migrations
-- ✅ Merkle Roots stored in `trust_anchors` PostgreSQL table
-- ✅ Preserved Dashboard UI (no structural UI changes)
-- ✅ Maintains Research Endpoint for SCOPUS paper metrics
+**📊 Live Dashboard:**  
+https://glitchzero.onrender.com/dashboard  
+
+### Deployment Architecture
+
+- Hosting Platform: Render (Singapore Region)
+- Database: Neon PostgreSQL (Cloud)
+- Runtime: Node.js 24
+- Environment: Production (NODE_ENV=production)
+
+The system is actively connected to a live PostgreSQL instance with persistent trust anchors.
 
 ---
 
-## ⚡ Quick Start (v6 Production)
+## 🚀 Version 6 — PostgreSQL + Neon Migration
+
+GlitchZero v6 migrated from SQLite to **PostgreSQL (Neon Cloud DB)**  
+while preserving the entire dashboard UI and research endpoint structure.
+
+### Key Enhancements
+
+- ✅ Migrated to PostgreSQL using native `pg` driver
+- ✅ Node.js 24 optimized runtime (ESM + Top-Level Await)
+- ✅ Drizzle ORM for type-safe schema management
+- ✅ Merkle Roots stored in `trust_anchors` PostgreSQL table
+- ✅ Production-ready cloud deployment
+- ✅ Research endpoint retained for SCOPUS publication metrics
+
+---
+
+## ⚡ Local Development Setup
 
 ### 1. Create `.env`
 
@@ -61,12 +82,12 @@ npm start
 
 ## 1️⃣ Hybrid Anomaly Detection (Isolation Forest Triage)
 
-Every incoming anchor is scored using a lightweight 4-feature vector
-simulating Isolation Forest / One-Class SVM behavior before expensive audits.
+Each incoming anchor is scored using a lightweight 4-feature vector
+simulating Isolation Forest / One-Class SVM behavior.
 
 | Feature | Weight | Description |
 |----------|--------|------------|
-| Absolute magnitude | 45% | Numeric fields > 90 |
+| Absolute magnitude | 45% | Numeric fields > threshold |
 | Delta magnitude | 35% | % change vs previous record |
 | Sensitive field | 12% | role / permission / access_level |
 | Temporal anomaly | 8% | Outside 07:00–19:00 business hours |
@@ -77,24 +98,18 @@ simulating Isolation Forest / One-Class SVM behavior before expensive audits.
 - **SUSPICIOUS** (0.35–0.70) → Full semantic audit
 - **CRITICAL** (≥ 0.70) → Audit + agentic rollback eligible
 
-All metrics are logged into PostgreSQL for longitudinal research analysis.
+All classifications are logged in PostgreSQL for longitudinal analysis.
 
 ---
 
 ## 2️⃣ Verifiable Trust (Merkle + PostgreSQL Anchoring)
 
-- `shared/schema.ts` → `buildMerkleRoot()`  
-  SHA-256 binary Merkle tree (sorted pair concatenation)
-
+- `buildMerkleRoot()` implements SHA-256 binary Merkle tree
+- Sorted-pair concatenation ensures deterministic hashing
 - Every 10 anchors:
   - Compute Merkle Root
-  - Store in `trust_anchors` table (PostgreSQL)
+  - Store in `trust_anchors` table
   - Generate deterministic simulated Polygon tx hash
-
-- Dashboard Blockchain tab shows:
-  - Merkle Root
-  - Batch size
-  - Simulated transaction hash
 
 Each anchor includes:
 
@@ -103,7 +118,7 @@ blockchainVerified: true
 merkleRoot: <root>
 ```
 
-Ensuring tamper-evident historical integrity.
+This ensures tamper-evident audit history.
 
 ---
 
@@ -126,12 +141,13 @@ Example:
 ```
 
 Visible in:
+
 - Incidents Table
 - Incident Sidebar
 - API Tester Response Panel
 - Research Endpoint JSON
 
-All attribution data stored in PostgreSQL for reproducibility.
+All attribution data is persisted in PostgreSQL.
 
 ---
 
@@ -145,10 +161,10 @@ riskScore >= 96
 
 System automatically:
 
-1. POSTs `GLITCHZERO_AUTO_ROLLBACK` to `/api/internal/rollback`
+1. Sends `GLITCHZERO_AUTO_ROLLBACK` event
 2. Marks `selfHealed: true`
 3. Stores webhook result in PostgreSQL
-4. Displays 🛡 SELF-HEALED badge in Dashboard
+4. Displays 🛡 SELF-HEALED badge in dashboard
 
 The API Tester includes a **Simulate Attack** preset to trigger this flow.
 
@@ -158,11 +174,11 @@ The API Tester includes a **Simulate Attack** preset to trigger this flow.
 
 ### GET `/api/dashboard/research-data`
 
-Returns structured JSON containing:
+Returns structured JSON:
 
 - TP / FP / TN / FN
 - Precision / Recall / F1 / Accuracy
-- avg_ms / p50_ms / p95_ms / p99_ms latency
+- avg_ms / p50_ms / p95_ms / p99_ms
 - Triage distribution
 - Audit skip rate
 - Blockchain anchoring summary
@@ -173,8 +189,6 @@ Designed for direct insertion into SCOPUS research tables.
 ---
 
 # 📡 API Reference
-
----
 
 ## POST `/api/anchor` (requires x-api-key)
 
@@ -190,29 +204,29 @@ Designed for direct insertion into SCOPUS research tables.
 
 ### Response Fields
 
-- `riskScore`
-- `anomalyScore`
-- `isFlagged`
-- `flagReason`
-- `triageClass`
-- `xaiFactors[]`
-- `selfHealed`
-- `webhookResult`
-- `blockchainVerified`
-- `merkleRoot`
-- `latencyMs`
+- riskScore
+- anomalyScore
+- isFlagged
+- flagReason
+- triageClass
+- xaiFactors[]
+- selfHealed
+- webhookResult
+- blockchainVerified
+- merkleRoot
+- latencyMs
 
 ---
 
 ## GET `/api/dashboard/merkle-batches`
 
-Returns all Merkle batch records from PostgreSQL.
+Returns Merkle batch records from PostgreSQL.
 
 ---
 
 ## GET `/api/dashboard/research-data`
 
-Returns structured metrics for academic publication.
+Returns publication-ready metrics.
 
 ---
 
@@ -225,14 +239,22 @@ Returns structured metrics for academic publication.
 | ORM | Drizzle ORM |
 | Integrity | SHA-256 Merkle Tree |
 | Blockchain | Polygon (Simulated Anchoring) |
+| Hosting | Render (Singapore Region) |
 | Frontend | Existing Dashboard UI (Unmodified) |
 
 ---
 
-# 📄 Research & Publication Context
+# 📄 Research Context
 
-GlitchZero v6 is developed as part of a **SCOPUS-indexed research initiative**
-focusing on AI-Native Trust Infrastructure for distributed institutional systems.
+GlitchZero v6 is deployed as a live experimental trust infrastructure
+for AI-integrated distributed systems.
+
+The public deployment enables:
+
+- Real-world experimental validation
+- Public reviewer access
+- Cloud-scale database integrity testing
+- Live anomaly detection demonstration
 
 **Author:** Sanika Sameer Tribhuvan  
-**Version:** 6.0 (PostgreSQL Edition)
+**Version:** 6.0 — Production (PostgreSQL Edition)

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>GlitchZero — AI-Native Trust Infrastructure</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    /* ── THEME VARIABLES ── */
+    :root {
+      --green:#00ff88; --cyan:#00f0ff; --red:#ff003c;
+      --transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+    [data-theme="dark"] {
+      --bg:#050810; --bg2:#080d1a; --bg3:rgba(8,13,26,0.85);
+      --fg:#d4f5e8; --dim:rgba(180,220,200,0.5);
+      --border:rgba(0,255,136,0.12); --border2:rgba(0,255,136,0.2);
+      --nav-bg:rgba(5,8,16,0.92); --card-bg:rgba(8,13,26,0.85);
+      --code-bg:rgba(3,8,16,0.95); --grid-c:rgba(0,255,136,0.03);
+      --scan-bg:rgba(0,0,0,0.07); --crt:rgba(0,0,0,0.07);
+    }
+    [data-theme="light"] {
+      --bg:#f0faf5; --bg2:#e4f4ec; --bg3:rgba(255,255,255,0.9);
+      --fg:#0a1f14; --dim:rgba(20,80,50,0.6);
+      --border:rgba(0,180,90,0.18); --border2:rgba(0,180,90,0.35);
+      --nav-bg:rgba(240,250,245,0.94); --card-bg:rgba(255,255,255,0.9);
+      --code-bg:rgba(230,248,238,0.95); --grid-c:rgba(0,180,90,0.05);
+      --scan-bg:rgba(0,180,90,0.04); --crt:rgba(0,0,0,0);
+    }
+
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--fg);font-family:'Rajdhani',sans-serif;overflow-x:hidden;transition:var(--transition)}
+
+    /* CRT (dark only) */
+    [data-theme="dark"] body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,var(--crt) 2px,var(--crt) 4px);pointer-events:none;z-index:9999}
+
+    /* Grid bg */
+    .grid-bg{background-image:linear-gradient(var(--grid-c) 1px,transparent 1px),linear-gradient(90deg,var(--grid-c) 1px,transparent 1px);background-size:40px 40px}
+
+    /* ── NAV ── */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;background:var(--nav-bg);border-bottom:1px solid var(--border);backdrop-filter:blur(14px);transition:var(--transition)}
+    .logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.25rem;letter-spacing:0.15em;color:var(--green);text-decoration:none;transition:var(--transition)}
+    [data-theme="dark"] .logo{text-shadow:0 0 12px rgba(0,255,136,0.5)}
+    .logo span{color:var(--fg)}
+    .nav-links{display:flex;align-items:center;gap:1.25rem}
+    .nav-links a{font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--dim);text-decoration:none;transition:color 0.2s}
+    .nav-links a:hover{color:var(--green)}
+
+    /* Theme toggle */
+    .theme-toggle{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid var(--border2);background:transparent;cursor:pointer;transition:all 0.2s;border-radius:4px;color:var(--green)}
+    .theme-toggle:hover{background:rgba(0,255,136,0.1);box-shadow:0 0 12px rgba(0,255,136,0.2)}
+    .theme-toggle svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .icon-moon{display:block} .icon-sun{display:none}
+    [data-theme="light"] .icon-moon{display:none} [data-theme="light"] .icon-sun{display:block}
+
+    /* ── BUTTONS ── */
+    .btn{display:inline-flex;align-items:center;gap:0.4rem;font-family:'Share Tech Mono',monospace;font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;text-decoration:none;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%)}
+    .btn-g{background:var(--green);color:#050810;padding:0.6rem 1.5rem;font-weight:700;border:none}
+    .btn-g:hover{background:#fff;box-shadow:0 0 30px rgba(0,255,136,0.5)}
+    .btn-o{background:transparent;color:var(--green);padding:0.6rem 1.5rem;border:1px solid var(--green)}
+    .btn-o:hover{background:rgba(0,255,136,0.1);box-shadow:0 0 20px rgba(0,255,136,0.3)}
+    .btn-sm{padding:0.4rem 1rem;font-size:0.65rem}
+
+    /* ── HERO ── */
+    #hero{min-height:100vh;display:flex;align-items:center;padding:80px 2rem 4rem;position:relative;overflow:hidden}
+    .hero-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:3rem;flex-wrap:wrap;width:100%}
+    .hero-tag{display:inline-flex;align-items:center;gap:0.5rem;font-family:'Share Tech Mono',monospace;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--green);border:1px solid var(--border2);background:rgba(0,255,136,0.06);padding:0.35rem 0.75rem;margin-bottom:1.25rem}
+    h1{font-family:'Orbitron',sans-serif;font-size:clamp(2.8rem,6vw,5rem);font-weight:900;line-height:1.05;letter-spacing:-0.02em;margin-bottom:1.25rem}
+    h1 .g{color:var(--green)} [data-theme="dark"] h1 .g{text-shadow:0 0 20px rgba(0,255,136,0.45)}
+    .hero-sub{font-size:1.05rem;color:var(--dim);max-width:480px;line-height:1.7;margin-bottom:2rem}
+    .hero-actions{display:flex;gap:1rem;flex-wrap:wrap}
+
+    .scan{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);animation:scanline 7s ease-in-out infinite;opacity:0.4;pointer-events:none}
+    @keyframes scanline{0%{top:-2px;opacity:0}10%{opacity:0.4}90%{opacity:0.2}100%{top:100%;opacity:0}}
+
+    /* ── TERMINAL ── */
+    .terminal{background:var(--code-bg);border:1px solid var(--border2);padding:1.5rem;font-family:'Share Tech Mono',monospace;font-size:0.75rem;line-height:1.9;min-width:360px;max-width:440px;flex-shrink:0;animation:float 5s ease-in-out infinite;transition:var(--transition)}
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+    .t-hdr{display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border)}
+    .dot{width:8px;height:8px;border-radius:50%}
+    .t-title{color:var(--dim);font-size:0.63rem;margin-left:0.4rem}
+    .t-dim{color:var(--dim)} .t-g{color:var(--green)} .t-r{color:var(--red)} .t-c{color:var(--cyan)}
+    .cursor::after{content:'█';animation:blink 1s step-end infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+    /* ── STATS ── */
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-top:3.5rem}
+    .stat{background:var(--bg);padding:1.75rem 1.5rem;text-align:center;transition:var(--transition)}
+    .stat-n{font-family:'Orbitron',sans-serif;font-size:2.2rem;font-weight:900;color:var(--green);display:block}
+    [data-theme="dark"] .stat-n{text-shadow:0 0 16px rgba(0,255,136,0.4)}
+    .stat-l{font-family:'Share Tech Mono',monospace;font-size:0.63rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--dim);margin-top:0.25rem;display:block}
+
+    /* ── SECTIONS ── */
+    section{padding:5.5rem 2rem}
+    .container{max-width:1200px;margin:0 auto}
+    .sec-label{font-family:'Share Tech Mono',monospace;font-size:0.63rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--green);opacity:0.8;margin-bottom:0.6rem}
+    .sec-title{font-family:'Orbitron',sans-serif;font-size:clamp(1.8rem,3vw,2.4rem);font-weight:900;color:var(--fg);letter-spacing:-0.02em;margin-bottom:0.9rem;transition:var(--transition)}
+    .sec-title span{color:var(--green)}
+    .sec-sub{color:var(--dim);max-width:460px;line-height:1.7;font-size:0.975rem}
+
+    /* ── FEATURE GRID — fixed 3×2 ── */
+    #features{background:var(--bg2);transition:var(--transition)}
+    .f-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-top:2.75rem}
+    .f-card{background:var(--card-bg);padding:1.75rem;position:relative;transition:background 0.3s,var(--transition);cursor:default}
+    .f-card:hover{background:rgba(0,255,136,0.04)}
+    [data-theme="light"] .f-card:hover{background:rgba(0,200,100,0.07)}
+    .f-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:0;background:var(--green);transition:height 0.4s ease}
+    .f-card:hover::before{height:100%}
+    .f-icon{font-size:1.6rem;margin-bottom:0.75rem;display:block}
+    .f-title{font-family:'Orbitron',sans-serif;font-size:0.8rem;letter-spacing:0.08em;color:var(--fg);margin-bottom:0.6rem;transition:var(--transition)}
+    .f-desc{color:var(--dim);font-size:0.88rem;line-height:1.6}
+    .f-num{position:absolute;top:1rem;right:1rem;font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--green);opacity:0.2}
+    @media(max-width:768px){.f-grid{grid-template-columns:1fr}}
+
+    /* ── STEPS ── */
+    .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:1.75rem;margin-top:2.75rem}
+    .step{text-align:center;padding:1.75rem 1.25rem;background:var(--card-bg);border:1px solid var(--border);transition:var(--transition)}
+    .step-n{font-family:'Orbitron',sans-serif;font-size:2.2rem;font-weight:900;color:transparent;-webkit-text-stroke:1px rgba(0,255,136,0.3);display:block;margin-bottom:0.75rem}
+    .step-t{font-family:'Orbitron',sans-serif;font-size:0.78rem;letter-spacing:0.08em;color:var(--green);margin-bottom:0.6rem}
+    .step-d{color:var(--dim);font-size:0.86rem;line-height:1.6}
+    code{color:var(--green);background:rgba(0,255,136,0.08);padding:1px 5px;font-family:'Share Tech Mono',monospace}
+
+    /* ── CODE BLOCK ── */
+    .code-block{background:var(--code-bg);border:1px solid var(--border2);padding:1.5rem;font-family:'Share Tech Mono',monospace;font-size:0.77rem;line-height:1.85;overflow-x:auto;margin-top:2.5rem;transition:var(--transition);position:relative}
+    .copy-btn{position:absolute;top:0.75rem;right:0.75rem;font-family:'Share Tech Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;background:transparent;border:1px solid var(--border2);color:var(--green);padding:0.25rem 0.6rem;cursor:pointer;transition:all 0.2s}
+    .copy-btn:hover{background:rgba(0,255,136,0.1)}
+
+    /* ── LANG TABS ── */
+    .lang-tabs{display:flex;gap:4px;margin-bottom:0;flex-wrap:wrap}
+    .lang-tab{font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.35rem 0.9rem;border:1px solid var(--border);background:transparent;color:var(--dim);cursor:pointer;transition:all 0.2s}
+    .lang-tab:hover,.lang-tab.active{border-color:var(--green);color:var(--green);background:rgba(0,255,136,0.06)}
+    .lang-panel{display:none} .lang-panel.active{display:block}
+
+    /* ── CTA ── */
+    #cta{text-align:center;background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(0,255,136,0.06) 0%,transparent 70%)}
+    .cta-t{font-family:'Orbitron',sans-serif;font-size:clamp(1.8rem,4vw,3rem);font-weight:900;color:var(--fg);margin-bottom:0.9rem;letter-spacing:-0.02em;transition:var(--transition)}
+    .cta-t span{color:var(--green)}
+    .cta-sub{color:var(--dim);font-size:1rem;max-width:420px;margin:0 auto 2.25rem;line-height:1.7}
+    .cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+
+    /* ── FOOTER ── */
+    footer{border-top:1px solid var(--border);padding:1.75rem 2rem;text-align:center;font-family:'Share Tech Mono',monospace;font-size:0.63rem;color:var(--dim);letter-spacing:0.1em;transition:var(--transition)}
+    footer a{color:var(--green);text-decoration:none}
+
+    @media(max-width:900px){.steps{grid-template-columns:1fr}}
+    @media(max-width:768px){.terminal{min-width:unset;width:100%}.nav-links a:not(:last-child){display:none}.stats-row{grid-template-columns:repeat(2,1fr)}.f-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:480px){.f-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body class="grid-bg">
+
+<nav>
+  <a href="#" class="logo">Glitch<span>Zero</span></a>
+  <div class="nav-links">
+    <a href="#features">Product</a>
+    <a href="#how">Integration</a>
+    <a href="#cta">Get Started</a>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle dark/light mode">
+      <!-- Moon icon (shown in dark mode) -->
+      <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <!-- Sun icon (shown in light mode) -->
+      <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
+    <a href="/dashboard" class="btn btn-g btn-sm">Launch Console →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="scan"></div>
+  <div class="hero-inner">
+    <div style="flex:1;min-width:280px">
+      <div class="hero-tag">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1s step-end infinite"></span>
+        AI-Native Trust Infrastructure · v2.0
+      </div>
+      <h1>
+        <span class="g">Zero Glitch.</span><br>
+        <span>Total Trust.</span>
+      </h1>
+      <p class="hero-sub">
+        GlitchZero intercepts, hashes, and risk-scores every data mutation in real-time —
+        detecting fraud before it lands. Works with any language. Any stack.
+      </p>
+      <div class="hero-actions">
+        <a href="/dashboard" class="btn btn-g">Launch Console →</a>
+        <a href="#how" class="btn btn-o">See How It Works</a>
+      </div>
+      <div class="stats-row">
+        <div class="stat"><span class="stat-n" id="cnt">0</span><span class="stat-l">Anchors Created</span></div>
+        <div class="stat"><span class="stat-n">99.9%</span><span class="stat-l">Detection Rate</span></div>
+        <div class="stat"><span class="stat-n">&lt;5ms</span><span class="stat-l">Avg. Latency</span></div>
+      </div>
+    </div>
+
+    <!-- Terminal -->
+    <div class="terminal">
+      <div class="t-hdr">
+        <div class="dot" style="background:#ff5f57"></div>
+        <div class="dot" style="background:#febc2e"></div>
+        <div class="dot" style="background:#28c840"></div>
+        <span class="t-title">glitchzero · trust-api v2.0</span>
+      </div>
+      <div class="t-dim">$ POST /api/anchor</div>
+      <div class="t-dim">↳ x-api-key: <span class="t-c">gz_••••••••ef3a</span></div>
+      <div class="t-dim">↳ payload: <span class="t-g">{ salary: 42000 }</span></div>
+      <div class="t-g">✓ HASH sha256::a4f8c2…</div>
+      <div class="t-g">✓ DELTA Δ+2.4% → LOW RISK</div>
+      <div class="t-g">✓ ANCHOR stored · riskScore: 0</div>
+      <br>
+      <div class="t-dim">$ POST /api/anchor</div>
+      <div class="t-dim">↳ payload: <span class="t-r">{ salary: 98000 }</span></div>
+      <div class="t-r">⚠ FRAUD salary 98000 &gt;90 threshold</div>
+      <div class="t-r">⚠ FLAG riskScore: 85 · Incident logged</div>
+      <br>
+      <div class="t-dim cursor">Monitoring stream active</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES — 3×2 grid -->
+<section id="features">
+  <div class="container">
+    <div style="text-align:center">
+      <p class="sec-label">The Engine</p>
+      <h2 class="sec-title" style="margin:0 auto 0.9rem">Every <span>data change</span> — verified.</h2>
+      <p class="sec-sub" style="margin:0 auto">A cryptographic audit layer that turns every mutation into an immutable trust record.</p>
+    </div>
+    <div class="f-grid">
+      <div class="f-card"><span class="f-num">01</span><span class="f-icon">🔐</span><div class="f-title">SHA-256 Anchoring</div><p class="f-desc">Every payload deterministically hashed — tamper-evident by design. Canonical JSON before hashing.</p></div>
+      <div class="f-card"><span class="f-num">02</span><span class="f-icon">⚡</span><div class="f-title">Semantic Delta Engine</div><p class="f-desc">&gt;50% numeric change on any field triggers HIGH RISK flag. Full context and delta % returned.</p></div>
+      <div class="f-card"><span class="f-num">03</span><span class="f-icon">🎯</span><div class="f-title">Absolute Threshold</div><p class="f-desc">Any numeric value &gt;90 auto-flagged instantly, no history needed. Works on any field name.</p></div>
+      <div class="f-card"><span class="f-num">04</span><span class="f-icon">📡</span><div class="f-title">God View Dashboard</div><p class="f-desc">Live pulse graph, incident feed, Trust Score — real-time, always on. Zero setup required.</p></div>
+      <div class="f-card"><span class="f-num">05</span><span class="f-icon">🔑</span><div class="f-title">API Key Management</div><p class="f-desc">Create, name, revoke and manage keys for every client app — right from the dashboard.</p></div>
+      <div class="f-card"><span class="f-num">06</span><span class="f-icon">🧩</span><div class="f-title">Universal Integration</div><p class="f-desc">One POST endpoint. Any language — Node, Python, PHP, Java, C#, Go, Ruby. npm run dev and go.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="container">
+    <div style="text-align:center">
+      <p class="sec-label">Integration</p>
+      <h2 class="sec-title" style="margin:0 auto 0.9rem">Live in <span>3 steps.</span></h2>
+      <p class="sec-sub" style="margin:0 auto">Works with any language, any framework. One endpoint. Real-time results.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><span class="step-n">01</span><div class="step-t">Create Your Key</div><p class="step-d">Open the dashboard → API Keys tab. Name your app, click Generate. Copy your key — shown only once.</p></div>
+      <div class="step"><span class="step-n">02</span><div class="step-t">POST Your Data</div><p class="step-d">Send any JSON payload to <code>/api/anchor</code> with your key in the header. GlitchZero hashes and scores it.</p></div>
+      <div class="step"><span class="step-n">03</span><div class="step-t">Watch the Dashboard</div><p class="step-d">Every anchor appears in the live stream. Fraud incidents light up red in real-time.</p></div>
+    </div>
+
+    <!-- Multi-language code examples -->
+    <div style="margin-top:3rem">
+      <div style="text-align:center;margin-bottom:1.25rem">
+        <p class="sec-label">Code Examples</p>
+        <h3 class="sec-title" style="font-size:1.2rem;margin:0 auto">Your language, <span>our endpoint</span></h3>
+      </div>
+      <div class="lang-tabs">
+        <button class="lang-tab active" onclick="switchLang('js')">JavaScript</button>
+        <button class="lang-tab" onclick="switchLang('python')">Python</button>
+        <button class="lang-tab" onclick="switchLang('php')">PHP</button>
+        <button class="lang-tab" onclick="switchLang('java')">Java</button>
+        <button class="lang-tab" onclick="switchLang('csharp')">C#</button>
+        <button class="lang-tab" onclick="switchLang('go')">Go</button>
+        <button class="lang-tab" onclick="switchLang('ruby')">Ruby</button>
+        <button class="lang-tab" onclick="switchLang('curl')">cURL</button>
+      </div>
+
+      <div class="lang-panel active code-block" id="lang-js">
+        <button class="copy-btn" onclick="copyCode('lang-js')">Copy</button>
+        <div class="t-dim">// JavaScript / Node.js</div>
+        <div class="t-dim">await fetch(<span class="t-c">'http://localhost:5000/api/anchor'</span>, {</div>
+        <div class="t-dim">&nbsp;&nbsp;method: <span class="t-c">'POST'</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;headers: {</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-c">'x-api-key'</span>: <span class="t-g">'YOUR_GZ_KEY'</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-c">'Content-Type'</span>: <span class="t-g">'application/json'</span></div>
+        <div class="t-dim">&nbsp;&nbsp;},</div>
+        <div class="t-dim">&nbsp;&nbsp;body: JSON.stringify({</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;app_id: <span class="t-g">'my-app'</span>, user_id: <span class="t-g">'user_1'</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;entity_id: <span class="t-g">'employee-42'</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;data_payload: <span class="t-g">{ salary: 75000 }</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;timestamp: new Date().toISOString()</div>
+        <div class="t-dim">&nbsp;&nbsp;})</div>
+        <div class="t-dim">});</div>
+        <br>
+        <div class="t-dim">// <span class="t-g">→ { hash: "a4f8…", riskScore: 0, isFlagged: false }</span></div>
+      </div>
+
+      <div class="lang-panel code-block" id="lang-python">
+        <button class="copy-btn" onclick="copyCode('lang-python')">Copy</button>
+        <div class="t-dim"># Python</div>
+        <div class="t-dim">import requests, datetime</div>
+        <br>
+        <div class="t-dim">requests.post(</div>
+        <div class="t-dim">&nbsp;&nbsp;<span class="t-c">'http://localhost:5000/api/anchor'</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;headers={<span class="t-c">'x-api-key'</span>: <span class="t-g">'YOUR_GZ_KEY'</span>},</div>
+        <div class="t-dim">&nbsp;&nbsp;json={</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-c">'app_id'</span>: <span class="t-g">'my-app'</span>, <span class="t-c">'user_id'</span>: <span class="t-g">'user_1'</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-c">'entity_id'</span>: <span class="t-g">'employee-42'</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-c">'data_payload'</span>: {<span class="t-c">'salary'</span>: <span class="t-g">75000</span>},</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-c">'timestamp'</span>: datetime.datetime.utcnow().isoformat() + <span class="t-g">'Z'</span></div>
+        <div class="t-dim">&nbsp;&nbsp;}</div>
+        <div class="t-dim">)</div>
+      </div>
+
+      <div class="lang-panel code-block" id="lang-php">
+        <button class="copy-btn" onclick="copyCode('lang-php')">Copy</button>
+        <div class="t-dim">// PHP</div>
+        <div class="t-dim">$ch = curl_init(<span class="t-g">'http://localhost:5000/api/anchor'</span>);</div>
+        <div class="t-dim">curl_setopt_array($ch, [</div>
+        <div class="t-dim">&nbsp;&nbsp;CURLOPT_POST =&gt; true,</div>
+        <div class="t-dim">&nbsp;&nbsp;CURLOPT_RETURNTRANSFER =&gt; true,</div>
+        <div class="t-dim">&nbsp;&nbsp;CURLOPT_HTTPHEADER =&gt; [</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-g">'x-api-key: YOUR_GZ_KEY'</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-g">'Content-Type: application/json'</span></div>
+        <div class="t-dim">&nbsp;&nbsp;],</div>
+        <div class="t-dim">&nbsp;&nbsp;CURLOPT_POSTFIELDS =&gt; json_encode([</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-c">'app_id'</span> =&gt; <span class="t-g">'my-app'</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-c">'user_id'</span> =&gt; <span class="t-g">'user_1'</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-c">'entity_id'</span> =&gt; <span class="t-g">'employee-42'</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-c">'data_payload'</span> =&gt; [<span class="t-c">'salary'</span> =&gt; <span class="t-g">75000</span>],</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-c">'timestamp'</span> =&gt; gmdate(<span class="t-g">'Y-m-d\TH:i:s\Z'</span>)</div>
+        <div class="t-dim">&nbsp;&nbsp;])</div>
+        <div class="t-dim">]);</div>
+        <div class="t-dim">$response = json_decode(curl_exec($ch), true);</div>
+      </div>
+
+      <div class="lang-panel code-block" id="lang-java">
+        <button class="copy-btn" onclick="copyCode('lang-java')">Copy</button>
+        <div class="t-dim">// Java (HttpClient — Java 11+)</div>
+        <div class="t-dim">var body = <span class="t-g">"""</span></div>
+        <div class="t-dim t-g">&nbsp;&nbsp;{"app_id":"my-app","user_id":"user_1",</div>
+        <div class="t-dim t-g">&nbsp;&nbsp; "entity_id":"employee-42",</div>
+        <div class="t-dim t-g">&nbsp;&nbsp; "data_payload":{"salary":75000},</div>
+        <div class="t-dim t-g">&nbsp;&nbsp; "timestamp":"2026-01-01T00:00:00Z"}</div>
+        <div class="t-dim"><span class="t-g">"""</span>;</div>
+        <br>
+        <div class="t-dim">HttpClient.newHttpClient().send(</div>
+        <div class="t-dim">&nbsp;&nbsp;HttpRequest.newBuilder()</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;.uri(URI.create(<span class="t-g">"http://localhost:5000/api/anchor"</span>))</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;.header(<span class="t-g">"x-api-key"</span>, <span class="t-g">"YOUR_GZ_KEY"</span>)</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;.header(<span class="t-g">"Content-Type"</span>, <span class="t-g">"application/json"</span>)</div>
+        <div class="t-dim">&nbsp;&nbsp;&nbsp;&nbsp;.POST(HttpRequest.BodyPublishers.ofString(body)).build(),</div>
+        <div class="t-dim">&nbsp;&nbsp;HttpResponse.BodyHandlers.ofString());</div>
+      </div>
+
+      <div class="lang-panel code-block" id="lang-csharp">
+        <button class="copy-btn" onclick="copyCode('lang-csharp')">Copy</button>
+        <div class="t-dim">// C# (.NET)</div>
+        <div class="t-dim">using var client = new HttpClient();</div>
+        <div class="t-dim">client.DefaultRequestHeaders.Add(<span class="t-g">"x-api-key"</span>, <span class="t-g">"YOUR_GZ_KEY"</span>);</div>
+        <br>
+        <div class="t-dim">var payload = new {</div>
+        <div class="t-dim">&nbsp;&nbsp;app_id = <span class="t-g">"my-app"</span>, user_id = <span class="t-g">"user_1"</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;entity_id = <span class="t-g">"employee-42"</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;data_payload = new { salary = <span class="t-g">75000</span> },</div>
+        <div class="t-dim">&nbsp;&nbsp;timestamp = DateTime.UtcNow.ToString(<span class="t-g">"o"</span>)</div>
+        <div class="t-dim">};</div>
+        <br>
+        <div class="t-dim">var res = await client.PostAsJsonAsync(</div>
+        <div class="t-dim">&nbsp;&nbsp;<span class="t-g">"http://localhost:5000/api/anchor"</span>, payload);</div>
+      </div>
+
+      <div class="lang-panel code-block" id="lang-go">
+        <button class="copy-btn" onclick="copyCode('lang-go')">Copy</button>
+        <div class="t-dim">// Go</div>
+        <div class="t-dim">body := strings.NewReader(<span class="t-g">`{</span></div>
+        <div class="t-dim t-g">&nbsp;&nbsp;"app_id":"my-app","user_id":"user_1",</div>
+        <div class="t-dim t-g">&nbsp;&nbsp;"entity_id":"employee-42",</div>
+        <div class="t-dim t-g">&nbsp;&nbsp;"data_payload":{"salary":75000},</div>
+        <div class="t-dim t-g">&nbsp;&nbsp;"timestamp":"2026-01-01T00:00:00Z"</div>
+        <div class="t-dim"><span class="t-g">}`</span>)</div>
+        <br>
+        <div class="t-dim">req, _ := http.NewRequest(<span class="t-g">"POST"</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;<span class="t-g">"http://localhost:5000/api/anchor"</span>, body)</div>
+        <div class="t-dim">req.Header.Set(<span class="t-g">"x-api-key"</span>, <span class="t-g">"YOUR_GZ_KEY"</span>)</div>
+        <div class="t-dim">req.Header.Set(<span class="t-g">"Content-Type"</span>, <span class="t-g">"application/json"</span>)</div>
+        <div class="t-dim">http.DefaultClient.Do(req)</div>
+      </div>
+
+      <div class="lang-panel code-block" id="lang-ruby">
+        <button class="copy-btn" onclick="copyCode('lang-ruby')">Copy</button>
+        <div class="t-dim"># Ruby</div>
+        <div class="t-dim">require <span class="t-g">'net/http'</span></div>
+        <div class="t-dim">require <span class="t-g">'json'</span></div>
+        <br>
+        <div class="t-dim">uri = URI(<span class="t-g">'http://localhost:5000/api/anchor'</span>)</div>
+        <div class="t-dim">req = Net::HTTP::Post.new(uri)</div>
+        <div class="t-dim">req[<span class="t-g">'x-api-key'</span>] = <span class="t-g">'YOUR_GZ_KEY'</span></div>
+        <div class="t-dim">req[<span class="t-g">'Content-Type'</span>] = <span class="t-g">'application/json'</span></div>
+        <div class="t-dim">req.body = {</div>
+        <div class="t-dim">&nbsp;&nbsp;app_id: <span class="t-g">'my-app'</span>, user_id: <span class="t-g">'user_1'</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;entity_id: <span class="t-g">'employee-42'</span>,</div>
+        <div class="t-dim">&nbsp;&nbsp;data_payload: { salary: <span class="t-g">75000</span> },</div>
+        <div class="t-dim">&nbsp;&nbsp;timestamp: Time.now.utc.iso8601</div>
+        <div class="t-dim">}.to_json</div>
+        <div class="t-dim">Net::HTTP.start(uri.host, uri.port) { |h| h.request(req) }</div>
+      </div>
+
+      <div class="lang-panel code-block" id="lang-curl">
+        <button class="copy-btn" onclick="copyCode('lang-curl')">Copy</button>
+        <div class="t-dim"># cURL</div>
+        <div class="t-dim">curl -X POST http://localhost:5000/api/anchor \</div>
+        <div class="t-dim">&nbsp;&nbsp;-H <span class="t-g">"x-api-key: YOUR_GZ_KEY"</span> \</div>
+        <div class="t-dim">&nbsp;&nbsp;-H <span class="t-g">"Content-Type: application/json"</span> \</div>
+        <div class="t-dim">&nbsp;&nbsp;-d <span class="t-g">'{"app_id":"my-app","user_id":"user_1",</span></div>
+        <div class="t-dim t-g">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"entity_id":"employee-42",</div>
+        <div class="t-dim t-g">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"data_payload":{"salary":75000},</div>
+        <div class="t-dim t-g">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"timestamp":"2026-01-01T00:00:00Z"}'</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="container">
+    <h2 class="cta-t">Start <span>anchoring</span> your data.</h2>
+    <p class="cta-sub">Launch the console, create your first API key, and integrate in minutes.</p>
+    <div class="cta-btns">
+      <a href="/dashboard" class="btn btn-g" style="font-size:0.78rem;padding:0.75rem 2rem">Open God View →</a>
+      <a href="#how" class="btn btn-o" style="font-size:0.78rem;padding:0.75rem 2rem">View Code Examples</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 GlitchZero · AI-Native Trust Infrastructure</p>
+  <p style="margin-top:0.5rem"><a href="/dashboard">Dashboard</a> · <a href="#features">Product</a> · <a href="#how">Integration</a></p>
+</footer>
+
+<script>
+// ── Theme toggle ──────────────────────────────────────────────────────────
+function toggleTheme() {
+  const html = document.documentElement;
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('gz-theme', next);
+}
+// Restore saved theme
+(function() {
+  const saved = localStorage.getItem('gz-theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+})();
+
+// ── Language tabs ─────────────────────────────────────────────────────────
+function switchLang(lang) {
+  document.querySelectorAll('.lang-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.lang-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.lang-tab[onclick="switchLang('${lang}')"]`).classList.add('active');
+  document.getElementById('lang-' + lang).classList.add('active');
+}
+
+// ── Copy code ─────────────────────────────────────────────────────────────
+function copyCode(id) {
+  const el = document.getElementById(id);
+  const text = el.innerText.replace(/^Copy\n/, '');
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = el.querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy', 2000);
+  });
+}
+
+// ── Live anchor counter ───────────────────────────────────────────────────
+async function animateCount(el, target, dur=1800) {
+  const step = Math.max(1, target / (dur / 16));
+  let v = 0;
+  const t = setInterval(() => {
+    v = Math.min(v + step, target);
+    el.textContent = Math.floor(v).toLocaleString() + (v >= target ? '+' : '');
+    if (v >= target) clearInterval(t);
+  }, 16);
+}
+const observer = new IntersectionObserver(async entries => {
+  if (!entries[0].isIntersecting) return;
+  observer.disconnect();
+  try {
+    const r = await fetch('/api/dashboard/stats');
+    const d = await r.json();
+    animateCount(document.getElementById('cnt'), d.totalRequests || 0);
+  } catch { animateCount(document.getElementById('cnt'), 0); }
+});
+const el = document.querySelector('.stats-row');
+if (el) observer.observe(el);
+</script>
+</body>
+</html>

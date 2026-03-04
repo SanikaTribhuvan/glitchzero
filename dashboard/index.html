@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>GlitchZero v4 — Research Console</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.12.7/Recharts.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#050810;--bg2:#080d1a;--green:#00ff88;--cyan:#00f0ff;
+      --red:#ff003c;--yellow:#ffc800;--violet:#9b59ff;
+      --dim:rgba(180,220,200,0.5);--border:rgba(0,255,136,0.12);--card:rgba(8,13,26,0.9);
+    }
+    html,body{height:100%;background:var(--bg);color:#d4f5e8;font-family:'Rajdhani',sans-serif;overflow-x:hidden}
+    body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px);pointer-events:none;z-index:9999}
+    .grid-bg{background-image:linear-gradient(rgba(0,255,136,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.03) 1px,transparent 1px);background-size:40px 40px}
+
+    /* NAV */
+    .nav{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;background:rgba(5,8,16,0.97);border-bottom:1px solid var(--border);backdrop-filter:blur(14px);z-index:100}
+    .logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.1rem;letter-spacing:0.15em;color:var(--green);text-shadow:0 0 12px rgba(0,255,136,0.4)}
+    .logo span{color:#fff}
+    .nav-center{display:flex;gap:4px;flex-wrap:wrap}
+    .nav-btn{font-family:'Share Tech Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;background:transparent;border:1px solid transparent;color:rgba(180,220,200,0.4);padding:0.32rem 0.75rem;cursor:pointer;transition:all 0.2s}
+    .nav-btn:hover,.nav-btn.active{border-color:rgba(0,255,136,0.3);background:rgba(0,255,136,0.07);color:var(--green)}
+    .nav-right{display:flex;align-items:center;gap:0.75rem}
+    .clock{font-family:'Share Tech Mono',monospace;font-size:0.63rem;color:var(--dim)}
+    .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse-g 2s ease-in-out infinite;display:inline-block}
+    @keyframes pulse-g{0%,100%{opacity:1}50%{opacity:0.35}}
+    .exit-btn{font-family:'Share Tech Mono',monospace;font-size:0.6rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--dim);text-decoration:none;border:1px solid rgba(180,220,200,0.15);padding:0.3rem 0.7rem;transition:all 0.2s}
+    .exit-btn:hover{color:var(--green);border-color:rgba(0,255,136,0.3)}
+
+    /* LAYOUT */
+    .main{padding:68px 1.25rem 2rem;max-width:1700px;margin:0 auto}
+
+    /* PANEL */
+    .panel{background:var(--card);border:1px solid var(--border);position:relative;backdrop-filter:blur(8px)}
+    .panel::before,.panel::after{content:'';position:absolute;width:8px;height:8px;border-color:var(--green);border-style:solid;opacity:0.4}
+    .panel::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
+    .panel::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+    .panel.danger{border-color:rgba(255,0,60,0.25)}.panel.danger::before,.panel.danger::after{border-color:var(--red)}
+    .panel.warn{border-color:rgba(255,200,0,0.2)}.panel.warn::before,.panel.warn::after{border-color:var(--yellow)}
+    .panel.violet{border-color:rgba(155,89,255,0.25)}.panel.violet::before,.panel.violet::after{border-color:var(--violet)}
+    .panel.cyan{border-color:rgba(0,240,255,0.2)}.panel.cyan::before,.panel.cyan::after{border-color:var(--cyan)}
+
+    /* PANEL HEADER */
+    .ph{display:flex;align-items:center;justify-content:space-between;padding:0.8rem 1.1rem;border-bottom:1px solid var(--border)}
+    .ph-title{font-family:'Orbitron',sans-serif;font-size:0.67rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--green);font-weight:700}
+    .ph-title.red{color:var(--red)}.ph-title.cyan{color:var(--cyan)}.ph-title.yellow{color:var(--yellow)}.ph-title.violet{color:var(--violet)}
+    .ph-sub{font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--dim);margin-top:2px}
+
+    /* STAT GRID */
+    .stat-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:0.75rem;margin-bottom:0.85rem}
+    .stat-card{padding:0.9rem 1rem}
+    .stat-label{font-family:'Share Tech Mono',monospace;font-size:0.56rem;text-transform:uppercase;letter-spacing:0.13em;color:var(--dim);margin-bottom:0.3rem}
+    .stat-val{font-family:'Orbitron',sans-serif;font-size:1.7rem;font-weight:900;line-height:1}
+    .stat-sub{font-family:'Share Tech Mono',monospace;font-size:0.56rem;color:var(--dim);margin-top:0.25rem}
+    .seg-row{display:flex;gap:3px;margin-top:0.55rem}
+    .seg{flex:1;height:3px;border-radius:1px;transition:all 0.6s ease}
+
+    /* MAIN GRID */
+    .main-grid{display:grid;grid-template-columns:1fr 320px;gap:0.85rem}
+    .left-col{display:flex;flex-direction:column;gap:0.85rem}
+    .right-col{display:flex;flex-direction:column;gap:0.85rem}
+
+    /* STREAM */
+    .stream{overflow-y:auto;max-height:300px}
+    .stream-row{display:flex;align-items:flex-start;justify-content:space-between;padding:0.55rem 1.1rem;border-bottom:1px solid rgba(0,255,136,0.05);transition:background 0.15s;gap:8px}
+    .stream-row:hover{background:rgba(0,255,136,0.02)}
+    .stream-row.flagged{border-left:2px solid var(--red)}
+    .stream-row.healed{border-left:2px solid var(--violet)}
+    .stream-row.verified{border-left:2px solid rgba(0,240,255,0.4)}
+    .stream-hash{font-family:'Share Tech Mono',monospace;font-size:0.63rem;color:var(--green)}
+    .stream-hash.red{color:var(--red)}
+    .stream-meta{font-family:'Share Tech Mono',monospace;font-size:0.57rem;color:var(--dim);margin-top:1px;line-height:1.5}
+    .dot-g{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 4px var(--green);flex-shrink:0;margin-top:3px}
+    .dot-r{width:5px;height:5px;border-radius:50%;background:var(--red);box-shadow:0 0 4px var(--red);flex-shrink:0;animation:pulse-g 0.8s ease-in-out infinite;margin-top:3px}
+    .dot-v{width:5px;height:5px;border-radius:50%;background:var(--violet);box-shadow:0 0 4px var(--violet);flex-shrink:0;margin-top:3px}
+    .badge{font-family:'Share Tech Mono',monospace;font-size:0.54rem;padding:1px 5px;border:1px solid;text-transform:uppercase;white-space:nowrap}
+    .badge-g{color:var(--green);border-color:rgba(0,255,136,0.3)}
+    .badge-r{color:var(--red);border-color:rgba(255,0,60,0.35)}
+    .badge-v{color:var(--violet);border-color:rgba(155,89,255,0.4)}
+    .badge-c{color:var(--cyan);border-color:rgba(0,240,255,0.3)}
+    .badge-y{color:var(--yellow);border-color:rgba(255,200,0,0.3)}
+    .fraud-tag{font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--red);animation:pulse-g 0.8s ease-in-out infinite}
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2.5rem;opacity:0.35;font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:var(--green);text-align:center;gap:8px}
+
+    /* GAUGE */
+    .gauge-wrap{display:flex;flex-direction:column;align-items:center;padding:0.85rem 0.75rem}
+    .gauge-label{font-family:'Share Tech Mono',monospace;font-size:0.62rem;padding:0.2rem 0.7rem;margin-top:0.4rem;border:1px solid currentColor;letter-spacing:0.12em;font-weight:700}
+
+    /* INPUTS */
+    .cy-input{background:rgba(0,255,136,0.03);border:1px solid var(--border);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:0.73rem;padding:0.45rem 0.75rem;width:100%;outline:none;transition:border-color 0.2s}
+    .cy-input:focus{border-color:rgba(0,255,136,0.45);box-shadow:0 0 8px rgba(0,255,136,0.1)}
+    .cy-input::placeholder{color:rgba(0,255,136,0.2)}
+    .cy-textarea{min-height:80px;resize:vertical}
+
+    /* BUTTONS */
+    .btn{font-family:'Share Tech Mono',monospace;font-size:0.63rem;letter-spacing:0.12em;text-transform:uppercase;padding:0.55rem 1rem;cursor:pointer;border:1px solid;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:all 0.2s}
+    .btn-full{width:100%}
+    .btn-g{background:transparent;border-color:var(--green);color:var(--green)}
+    .btn-g:hover{background:rgba(0,255,136,0.1);box-shadow:0 0 14px rgba(0,255,136,0.2)}
+    .btn-r{background:rgba(255,0,60,0.07);border-color:var(--red);color:var(--red)}
+    .btn-r:hover{background:rgba(255,0,60,0.15);box-shadow:0 0 14px rgba(255,0,60,0.25)}
+    .btn-c{background:transparent;border-color:var(--cyan);color:var(--cyan)}
+    .btn-c:hover{background:rgba(0,240,255,0.07)}
+    .btn-v{background:rgba(155,89,255,0.07);border-color:var(--violet);color:var(--violet)}
+    .btn-v:hover{background:rgba(155,89,255,0.14)}
+    .btn-sm{padding:0.3rem 0.65rem;font-size:0.58rem}
+    .btn:disabled{opacity:0.35;cursor:not-allowed}
+
+    /* PROGRESS */
+    .progress-track{height:3px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;margin-top:6px}
+    .progress-fill{height:100%;border-radius:2px;transition:width 0.7s ease}
+
+    /* XAI BARS */
+    .xai-wrap{margin-top:6px}
+    .xai-row{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+    .xai-label{font-family:'Share Tech Mono',monospace;font-size:0.54rem;color:var(--dim);width:108px;flex-shrink:0;text-align:right;line-height:1.3}
+    .xai-track{flex:1;height:6px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;position:relative}
+    .xai-fill{height:100%;border-radius:2px;transition:width 0.9s ease}
+    .xai-pct{font-family:'Share Tech Mono',monospace;font-size:0.54rem;color:var(--dim);width:28px;flex-shrink:0;text-align:right}
+
+    /* INCIDENT PANEL */
+    .inc-row{padding:0.75rem 1.1rem;border-bottom:1px solid rgba(255,0,60,0.07)}
+    .inc-reason{font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--red);margin-bottom:4px;line-height:1.55;word-break:break-word}
+    .inc-meta{font-family:'Share Tech Mono',monospace;font-size:0.57rem;color:var(--dim)}
+
+    /* TABLE */
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse}
+    th{font-family:'Share Tech Mono',monospace;font-size:0.56rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--dim);padding:0.7rem 0.85rem;text-align:left;border-bottom:1px solid rgba(255,0,60,0.15)}
+    td{font-family:'Share Tech Mono',monospace;font-size:0.61rem;padding:0.6rem 0.85rem;border-bottom:1px solid rgba(255,0,60,0.06);color:#d4f5e8;vertical-align:top}
+    tr:hover td{background:rgba(255,0,60,0.03)}
+
+    /* API TESTER */
+    .api-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .field-group{margin-bottom:0.8rem}
+    .field-label{font-family:'Share Tech Mono',monospace;font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--dim);display:block;margin-bottom:0.35rem}
+    .presets{display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.85rem}
+    .preset-btn{font-family:'Share Tech Mono',monospace;font-size:0.57rem;padding:0.28rem 0.6rem;cursor:pointer;background:transparent;border:1px solid rgba(0,255,136,0.22);color:rgba(0,255,136,0.55);text-transform:uppercase;letter-spacing:0.08em;transition:all 0.2s}
+    .preset-btn:hover{border-color:var(--green);color:var(--green);background:rgba(0,255,136,0.06)}
+    .preset-btn.attack-btn{border-color:rgba(255,0,60,0.35);color:rgba(255,0,60,0.7)}
+    .preset-btn.attack-btn:hover{border-color:var(--red);color:var(--red);background:rgba(255,0,60,0.07)}
+    .response-box{background:rgba(0,0,0,0.5);border:1px solid var(--border);padding:1rem;font-family:'Share Tech Mono',monospace;font-size:0.63rem;color:var(--green);overflow-y:auto;max-height:340px;white-space:pre-wrap;line-height:1.7}
+    .response-box.err{color:var(--red);border-color:rgba(255,0,60,0.3)}
+    .response-box.fraud{color:var(--red);border-color:rgba(255,0,60,0.35)}
+    .response-box.healed{color:var(--violet);border-color:rgba(155,89,255,0.35)}
+
+    /* SELF-HEAL BANNER */
+    .heal-banner{display:flex;align-items:flex-start;gap:10px;padding:0.65rem 0.85rem;background:rgba(155,89,255,0.07);border:1px solid rgba(155,89,255,0.3);margin-bottom:0.65rem}
+    .heal-icon{font-size:1rem;flex-shrink:0;margin-top:2px}
+    .heal-text{font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--violet);line-height:1.6}
+
+    /* BLOCKCHAIN BADGE */
+    .bc-badge{display:inline-flex;align-items:center;gap:5px;font-family:'Share Tech Mono',monospace;font-size:0.54rem;color:var(--cyan);border:1px solid rgba(0,240,255,0.25);padding:1px 6px;background:rgba(0,240,255,0.04)}
+    .bc-dot{width:4px;height:4px;border-radius:50%;background:var(--cyan);box-shadow:0 0 4px var(--cyan)}
+
+    /* API KEYS */
+    .keys-grid{display:grid;gap:0.75rem;margin-top:1rem}
+    .key-card{background:var(--card);border:1px solid var(--border);padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;transition:border-color 0.2s}
+    .key-card.revoked{opacity:0.45;border-color:rgba(255,0,60,0.15)}
+    .key-name{font-family:'Orbitron',sans-serif;font-size:0.75rem;color:#d4f5e8;font-weight:700}
+    .key-app{font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--dim);margin-top:2px}
+    .key-preview{font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--cyan);letter-spacing:0.05em;margin-top:4px}
+    .key-meta{font-family:'Share Tech Mono',monospace;font-size:0.57rem;color:var(--dim);margin-top:3px}
+    .key-actions{display:flex;gap:0.4rem;flex-shrink:0}
+
+    /* MODAL */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+    .modal{background:var(--bg2);border:1px solid rgba(0,255,136,0.25);padding:2rem;width:100%;max-width:500px;position:relative}
+    .modal::before,.modal::after{content:'';position:absolute;width:10px;height:10px;border-color:var(--green);border-style:solid;opacity:0.5}
+    .modal::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
+    .modal::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+    .modal-title{font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:900;color:var(--green);margin-bottom:1.5rem;letter-spacing:0.05em}
+    .key-reveal{background:rgba(0,0,0,0.6);border:1px solid rgba(0,255,136,0.3);padding:1rem 1.25rem;margin:1rem 0;font-family:'Share Tech Mono',monospace;font-size:0.75rem;color:var(--green);word-break:break-all;line-height:1.6;position:relative}
+    .copy-key-btn{position:absolute;top:0.5rem;right:0.5rem;font-family:'Share Tech Mono',monospace;font-size:0.57rem;text-transform:uppercase;background:transparent;border:1px solid rgba(0,255,136,0.3);color:var(--green);padding:0.2rem 0.5rem;cursor:pointer;transition:all 0.2s}
+    .copy-key-btn:hover{background:rgba(0,255,136,0.1)}
+
+    /* PAGE */
+    .page{display:none}.page.active{display:block}
+    .search-wrap{display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;font-family:'Share Tech Mono',monospace;font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.7rem 1.25rem;border:1px solid var(--green);background:rgba(5,8,16,0.97);color:var(--green);z-index:500;transform:translateY(20px);opacity:0;transition:all 0.3s}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast.err{border-color:var(--red);color:var(--red)}
+
+    /* SDK */
+    .sdk-tabs{display:flex;gap:3px;flex-wrap:wrap}
+    .sdk-tab{font-family:'Share Tech Mono',monospace;font-size:0.58rem;letter-spacing:0.08em;text-transform:uppercase;padding:0.28rem 0.7rem;border:1px solid var(--border);background:transparent;color:var(--dim);cursor:pointer;transition:all 0.2s}
+    .sdk-tab:hover,.sdk-tab.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,240,255,0.05)}
+    .sdk-panel{display:none;background:rgba(0,0,0,0.45);border:1px solid var(--border);padding:0.85rem 1rem;font-family:'Share Tech Mono',monospace;font-size:0.65rem;line-height:1.8;color:rgba(180,220,200,0.5);white-space:pre-wrap;overflow-x:auto}
+    .sdk-panel.active{display:block}
+    .sdk-dim{color:rgba(180,220,200,0.45)}.sdk-g{color:var(--green)}.sdk-c{color:var(--cyan)}
+
+    /* RESEARCH PAGE */
+    .research-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:0.85rem}
+    .research-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-bottom:0.85rem}
+    .metric-card{padding:0.9rem 1.1rem}
+    .metric-val{font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;line-height:1}
+    .metric-label{font-family:'Share Tech Mono',monospace;font-size:0.56rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--dim);margin-top:4px}
+    .json-box{background:rgba(0,0,0,0.5);border:1px solid rgba(155,89,255,0.2);padding:1rem;font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:rgba(155,89,255,0.7);overflow-y:auto;max-height:420px;white-space:pre-wrap;line-height:1.75}
+
+    @media(max-width:1200px){.stat-grid{grid-template-columns:repeat(3,1fr)}.main-grid{grid-template-columns:1fr}.research-grid{grid-template-columns:repeat(2,1fr)}.api-grid{grid-template-columns:1fr}}
+    @media(max-width:600px){.stat-grid{grid-template-columns:repeat(2,1fr)}.research-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body class="grid-bg">
+<div class="toast" id="toast"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="live-dot"></span>
+    <span class="logo">Glitch<span>Zero</span></span>
+    <span style="font-family:'Share Tech Mono',monospace;font-size:0.55rem;background:rgba(155,89,255,0.08);border:1px solid rgba(155,89,255,0.25);color:var(--violet);padding:2px 7px;letter-spacing:0.1em">v4 RESEARCH</span>
+  </div>
+  <div class="nav-center">
+    <button class="nav-btn active" onclick="showPage('overview',this)">Overview</button>
+    <button class="nav-btn" onclick="showPage('incidents',this)">Incidents</button>
+    <button class="nav-btn" onclick="showPage('blockchain',this)">Blockchain</button>
+    <button class="nav-btn" onclick="showPage('api-keys',this)">API Keys</button>
+    <button class="nav-btn" onclick="showPage('api-tester',this)">API Tester</button>
+    <button class="nav-btn" onclick="showPage('research',this)">Research</button>
+  </div>
+  <div class="nav-right">
+    <span class="clock" id="clock">--:--:--</span>
+    <a href="/" class="exit-btn">← Exit</a>
+  </div>
+</nav>
+
+<div class="main">
+
+<!-- ████ OVERVIEW ████ -->
+<div class="page active" id="page-overview">
+  <!-- 6 stat cards -->
+  <div class="stat-grid">
+    <div class="panel stat-card">
+      <div class="stat-label">Trust Score</div>
+      <div class="stat-val" id="s-trust" style="color:var(--green)">100</div>
+      <div class="seg-row" id="s-segs"></div>
+    </div>
+    <div class="panel stat-card">
+      <div class="stat-label">Active Incidents</div>
+      <div class="stat-val" id="s-flag" style="color:var(--red)">0</div>
+      <div class="stat-sub" id="s-flag-sub">System secure</div>
+    </div>
+    <div class="panel stat-card">
+      <div class="stat-label">Total Anchors</div>
+      <div class="stat-val" id="s-total" style="color:var(--cyan)">0</div>
+      <div class="stat-sub">Cryptographic records</div>
+    </div>
+    <div class="panel stat-card">
+      <div class="stat-label">⛓ Chain Verified</div>
+      <div class="stat-val" id="s-bc" style="color:var(--cyan)">0</div>
+      <div class="stat-sub" id="s-bc-sub">Merkle anchored</div>
+    </div>
+    <div class="panel stat-card">
+      <div class="stat-label">🛡 Self-Healed</div>
+      <div class="stat-val" id="s-healed" style="color:var(--violet)">0</div>
+      <div class="stat-sub">Agentic rollbacks</div>
+    </div>
+    <div class="panel stat-card">
+      <div class="stat-label">API Keys</div>
+      <div class="stat-val" id="s-keys" style="color:var(--yellow)">0</div>
+      <div class="stat-sub" id="s-keys-sub">No keys yet</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <div class="left-col">
+      <div class="panel">
+        <div class="ph">
+          <div><div class="ph-title">The Pulse</div><div class="ph-sub">Anchor ingestion rate · 5-min buckets</div></div>
+          <div style="display:flex;align-items:center;gap:6px"><span class="live-dot"></span><span style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--green)">LIVE</span></div>
+        </div>
+        <div style="padding:1rem 0.5rem 0.75rem"><div id="chart-container" style="width:100%;height:155px"></div></div>
+      </div>
+
+      <div class="panel">
+        <div class="ph">
+          <div><div class="ph-title">Live Anchor Stream</div><div class="ph-sub" id="stream-count">0 records</div></div>
+          <span class="live-dot"></span>
+        </div>
+        <div class="stream" id="stream-list">
+          <div class="empty-state"><div>NO ANCHORS YET_</div><div style="font-size:0.57rem">Create an API key → POST data from your app</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right-col">
+      <div class="panel">
+        <div class="ph"><div class="ph-title">Trust Score</div></div>
+        <div class="gauge-wrap">
+          <svg width="150" height="150" viewBox="0 0 120 120" style="transform:rotate(-90deg)">
+            <circle cx="60" cy="60" r="48" fill="none" stroke="rgba(0,255,136,0.07)" stroke-width="9"/>
+            <circle id="gauge-arc" cx="60" cy="60" r="48" fill="none" stroke="var(--green)" stroke-width="9"
+              stroke-linecap="round" stroke-dasharray="301.6 301.6"
+              style="transition:stroke-dasharray 1s ease,stroke 1s ease;filter:drop-shadow(0 0 6px rgba(0,255,136,0.5))"/>
+          </svg>
+          <div style="margin-top:-82px;margin-bottom:66px;text-align:center">
+            <div id="gauge-val" style="font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:var(--green)">100</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:0.57rem;color:var(--dim)">TRUST</div>
+          </div>
+          <div id="gauge-label" class="gauge-label" style="color:var(--green)">SECURE</div>
+        </div>
+      </div>
+
+      <div class="panel danger">
+        <div class="ph"><div class="ph-title red">⚡ Fraud Simulator</div></div>
+        <div style="padding:0.85rem">
+          <div class="field-group">
+            <label class="field-label">Field name</label>
+            <input type="text" id="sim-field" class="cy-input" value="grade" placeholder="grade, salary, score...">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Value (>90 triggers flag)</label>
+            <input type="number" id="sim-val" class="cy-input" value="98" min="1" max="99999">
+            <div class="progress-track"><div id="sim-bar" class="progress-fill" style="width:98%;background:var(--red)"></div></div>
+          </div>
+          <button class="btn btn-r btn-full" id="sim-btn" onclick="simulateFraud()">⚠ SIMULATE ATTACK</button>
+          <div id="sim-result" style="margin-top:0.6rem;display:none;padding:0.6rem;background:rgba(255,0,60,0.05);border:1px solid rgba(255,0,60,0.2)">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:0.63rem;color:var(--red);font-weight:700">FRAUD DETECTED</div>
+            <div id="sim-detail" style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--dim);margin-top:3px"></div>
+          </div>
+          <div id="sim-heal" style="display:none;margin-top:0.5rem" class="heal-banner">
+            <span class="heal-icon">🛡</span>
+            <div class="heal-text">AGENTIC ROLLBACK TRIGGERED — Entity reverted to last safe state automatically</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel danger">
+        <div class="ph">
+          <div><div class="ph-title red">Security Incidents</div><div class="ph-sub" id="inc-count">0 flagged</div></div>
+          <div id="inc-dot" style="display:none"><span class="dot-r"></span></div>
+        </div>
+        <div id="inc-list" style="overflow-y:auto;max-height:240px">
+          <div class="empty-state" style="color:var(--green)">
+            <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div>SYSTEM SECURE</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ████ INCIDENTS ████ -->
+<div class="page" id="page-incidents">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem">
+    <div>
+      <h2 style="font-family:'Orbitron',sans-serif;font-size:1.35rem;font-weight:900;color:var(--red);text-shadow:0 0 14px rgba(255,0,60,0.3)">Security Incidents</h2>
+      <p style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--dim);margin-top:3px">/SYSTEM/LOGS/FLAGGED — XAI attribution included</p>
+    </div>
+    <input type="text" class="cy-input" id="inc-search" placeholder="Search entity / user / reason…" style="max-width:220px" oninput="renderIncidentsTable()">
+  </div>
+  <div class="panel danger table-wrap">
+    <table>
+      <thead><tr>
+        <th>Time</th><th>Entity</th><th>User</th><th>App</th>
+        <th>Triage</th><th>Risk</th><th>Chain</th><th>Self-Healed</th>
+        <th style="min-width:200px">XAI Attribution</th><th>Reason</th>
+      </tr></thead>
+      <tbody id="inc-tbody"></tbody>
+    </table>
+    <div id="inc-empty" class="empty-state" style="display:none;color:var(--green)">NO ACTIVE INCIDENTS</div>
+  </div>
+</div>
+
+<!-- ████ BLOCKCHAIN ████ -->
+<div class="page" id="page-blockchain">
+  <div style="margin-bottom:1rem">
+    <h2 style="font-family:'Orbitron',sans-serif;font-size:1.35rem;font-weight:900;color:var(--cyan)">Blockchain Ledger</h2>
+    <p style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--dim);margin-top:3px">Simulated Polygon Mumbai — Merkle root committed every 10 anchors</p>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-bottom:0.85rem">
+    <div class="panel stat-card cyan">
+      <div class="stat-label">Batches Committed</div>
+      <div class="stat-val" id="bc-batch-count" style="color:var(--cyan)">0</div>
+    </div>
+    <div class="panel stat-card cyan">
+      <div class="stat-label">Anchors Verified</div>
+      <div class="stat-val" id="bc-anchor-count" style="color:var(--cyan)">0</div>
+    </div>
+    <div class="panel stat-card cyan">
+      <div class="stat-label">Network</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.85rem;color:var(--cyan);margin-top:6px">Polygon Mumbai</div>
+      <div class="stat-sub">(Simulated)</div>
+    </div>
+  </div>
+  <div class="panel cyan">
+    <div class="ph"><div class="ph-title cyan">⛓ Merkle Batch History</div></div>
+    <div id="bc-list" style="overflow-y:auto;max-height:500px">
+      <div class="empty-state" style="color:var(--cyan)">No batches yet — POST 10 anchors to trigger first Merkle commit</div>
+    </div>
+  </div>
+</div>
+
+<!-- ████ API KEYS ████ -->
+<div class="page" id="page-api-keys">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem">
+    <div>
+      <h2 style="font-family:'Orbitron',sans-serif;font-size:1.35rem;font-weight:900;color:var(--cyan)">API Keys</h2>
+      <p style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--dim);margin-top:3px">Create and manage keys for your client applications</p>
+    </div>
+    <button class="btn btn-g" onclick="openNewKeyModal()">+ Generate New Key</button>
+  </div>
+  <div class="panel" style="margin-bottom:1rem">
+    <div class="ph"><div class="ph-title cyan">Quick Integration Guide</div></div>
+    <div style="padding:1rem 1.25rem">
+      <p style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--dim);margin-bottom:0.85rem;line-height:1.7">
+        Replace <span style="color:var(--cyan)">YOUR_GZ_KEY</span> in your code. Works with any language.
+      </p>
+      <div class="sdk-tabs">
+        <button class="sdk-tab active" onclick="switchSdk('js')">JS</button>
+        <button class="sdk-tab" onclick="switchSdk('py')">Python</button>
+        <button class="sdk-tab" onclick="switchSdk('php')">PHP</button>
+        <button class="sdk-tab" onclick="switchSdk('java')">Java</button>
+        <button class="sdk-tab" onclick="switchSdk('cs')">C#</button>
+        <button class="sdk-tab" onclick="switchSdk('go')">Go</button>
+        <button class="sdk-tab" onclick="switchSdk('ruby')">Ruby</button>
+        <button class="sdk-tab" onclick="switchSdk('curl')">cURL</button>
+      </div>
+      <div class="sdk-panel active" id="sdk-js"><span class="sdk-dim">fetch(</span><span class="sdk-c">'http://localhost:5000/api/anchor'</span><span class="sdk-dim">, {
+  method: </span><span class="sdk-c">'POST'</span><span class="sdk-dim">,
+  headers: { </span><span class="sdk-c">'x-api-key'</span><span class="sdk-dim">: </span><span class="sdk-g">'YOUR_GZ_KEY'</span><span class="sdk-dim">, </span><span class="sdk-c">'Content-Type'</span><span class="sdk-dim">: </span><span class="sdk-g">'application/json'</span><span class="sdk-dim"> },
+  body: JSON.stringify({
+    app_id: </span><span class="sdk-g">'your-app'</span><span class="sdk-dim">, user_id: </span><span class="sdk-g">'current_user'</span><span class="sdk-dim">, entity_id: </span><span class="sdk-g">'record-id'</span><span class="sdk-dim">,
+    data_payload: </span><span class="sdk-g">{ field: value }</span><span class="sdk-dim">,
+    timestamp: new Date().toISOString()
+  })
+});</span></div>
+      <div class="sdk-panel" id="sdk-py"><span class="sdk-dim">import requests, datetime
+requests.post(</span><span class="sdk-c">'http://localhost:5000/api/anchor'</span><span class="sdk-dim">,
+  headers={</span><span class="sdk-c">'x-api-key'</span><span class="sdk-dim">: </span><span class="sdk-g">'YOUR_GZ_KEY'</span><span class="sdk-dim">},
+  json={</span><span class="sdk-c">'app_id'</span><span class="sdk-dim">: </span><span class="sdk-g">'your-app'</span><span class="sdk-dim">, </span><span class="sdk-c">'user_id'</span><span class="sdk-dim">: </span><span class="sdk-g">'user_1'</span><span class="sdk-dim">,
+        </span><span class="sdk-c">'entity_id'</span><span class="sdk-dim">: </span><span class="sdk-g">'record-id'</span><span class="sdk-dim">,
+        </span><span class="sdk-c">'data_payload'</span><span class="sdk-dim">: {</span><span class="sdk-c">'field'</span><span class="sdk-dim">: value},
+        </span><span class="sdk-c">'timestamp'</span><span class="sdk-dim">: datetime.datetime.utcnow().isoformat()+</span><span class="sdk-g">'Z'</span><span class="sdk-dim">})</span></div>
+      <div class="sdk-panel" id="sdk-php"><span class="sdk-dim">$ch = curl_init(</span><span class="sdk-g">'http://localhost:5000/api/anchor'</span><span class="sdk-dim">);
+curl_setopt_array($ch, [CURLOPT_POST=>true, CURLOPT_RETURNTRANSFER=>true,
+  CURLOPT_HTTPHEADER=>[</span><span class="sdk-g">'x-api-key: YOUR_GZ_KEY'</span><span class="sdk-dim">, </span><span class="sdk-g">'Content-Type: application/json'</span><span class="sdk-dim">],
+  CURLOPT_POSTFIELDS=>json_encode([
+    </span><span class="sdk-c">'app_id'</span><span class="sdk-dim">=></span><span class="sdk-g">'your-app'</span><span class="sdk-dim">, </span><span class="sdk-c">'user_id'</span><span class="sdk-dim">=></span><span class="sdk-g">'user_1'</span><span class="sdk-dim">, </span><span class="sdk-c">'entity_id'</span><span class="sdk-dim">=></span><span class="sdk-g">'record-id'</span><span class="sdk-dim">,
+    </span><span class="sdk-c">'data_payload'</span><span class="sdk-dim">=>[</span><span class="sdk-c">'field'</span><span class="sdk-dim">=>value], </span><span class="sdk-c">'timestamp'</span><span class="sdk-dim">=>gmdate(</span><span class="sdk-g">'Y-m-d\TH:i:s\Z'</span><span class="sdk-dim">)])
+]);
+$res = json_decode(curl_exec($ch), true);</span></div>
+      <div class="sdk-panel" id="sdk-java"><span class="sdk-dim">HttpClient.newHttpClient().send(
+  HttpRequest.newBuilder()
+    .uri(URI.create(</span><span class="sdk-g">"http://localhost:5000/api/anchor"</span><span class="sdk-dim">))
+    .header(</span><span class="sdk-g">"x-api-key"</span><span class="sdk-dim">, </span><span class="sdk-g">"YOUR_GZ_KEY"</span><span class="sdk-dim">)
+    .header(</span><span class="sdk-g">"Content-Type"</span><span class="sdk-dim">, </span><span class="sdk-g">"application/json"</span><span class="sdk-dim">)
+    .POST(HttpRequest.BodyPublishers.ofString(jsonBody)).build(),
+  HttpResponse.BodyHandlers.ofString());</span></div>
+      <div class="sdk-panel" id="sdk-cs"><span class="sdk-dim">using var client = new HttpClient();
+client.DefaultRequestHeaders.Add(</span><span class="sdk-g">"x-api-key"</span><span class="sdk-dim">, </span><span class="sdk-g">"YOUR_GZ_KEY"</span><span class="sdk-dim">);
+var payload = new { app_id=</span><span class="sdk-g">"your-app"</span><span class="sdk-dim">, user_id=</span><span class="sdk-g">"user_1"</span><span class="sdk-dim">,
+  entity_id=</span><span class="sdk-g">"record-id"</span><span class="sdk-dim">, data_payload=new{field=value},
+  timestamp=DateTime.UtcNow.ToString(</span><span class="sdk-g">"o"</span><span class="sdk-dim">) };
+await client.PostAsJsonAsync(</span><span class="sdk-g">"http://localhost:5000/api/anchor"</span><span class="sdk-dim">, payload);</span></div>
+      <div class="sdk-panel" id="sdk-go"><span class="sdk-dim">req, _ := http.NewRequest(</span><span class="sdk-g">"POST"</span><span class="sdk-dim">, </span><span class="sdk-g">"http://localhost:5000/api/anchor"</span><span class="sdk-dim">, body)
+req.Header.Set(</span><span class="sdk-g">"x-api-key"</span><span class="sdk-dim">, </span><span class="sdk-g">"YOUR_GZ_KEY"</span><span class="sdk-dim">)
+req.Header.Set(</span><span class="sdk-g">"Content-Type"</span><span class="sdk-dim">, </span><span class="sdk-g">"application/json"</span><span class="sdk-dim">)
+http.DefaultClient.Do(req)</span></div>
+      <div class="sdk-panel" id="sdk-ruby"><span class="sdk-dim">require </span><span class="sdk-g">'net/http'</span><span class="sdk-dim">, </span><span class="sdk-g">'json'</span>
+<span class="sdk-dim">uri = URI(</span><span class="sdk-g">'http://localhost:5000/api/anchor'</span><span class="sdk-dim">)
+req = Net::HTTP::Post.new(uri)
+req[</span><span class="sdk-g">'x-api-key'</span><span class="sdk-dim">] = </span><span class="sdk-g">'YOUR_GZ_KEY'</span>
+<span class="sdk-dim">req[</span><span class="sdk-g">'Content-Type'</span><span class="sdk-dim">] = </span><span class="sdk-g">'application/json'</span>
+<span class="sdk-dim">req.body = {app_id: </span><span class="sdk-g">'your-app'</span><span class="sdk-dim">, entity_id: </span><span class="sdk-g">'rec'</span><span class="sdk-dim">, data_payload:{field:value},
+  timestamp:Time.now.utc.iso8601}.to_json
+Net::HTTP.start(uri.host,uri.port){|h|h.request(req)}</span></div>
+      <div class="sdk-panel" id="sdk-curl"><span class="sdk-dim">curl -X POST http://localhost:5000/api/anchor \
+  -H </span><span class="sdk-g">"x-api-key: YOUR_GZ_KEY"</span><span class="sdk-dim"> \
+  -H </span><span class="sdk-g">"Content-Type: application/json"</span><span class="sdk-dim"> \
+  -d </span><span class="sdk-g">'{"app_id":"your-app","user_id":"user_1",
+       "entity_id":"record-id",
+       "data_payload":{"field":value},
+       "timestamp":"2026-01-01T00:00:00Z"}'</span></div>
+    </div>
+  </div>
+  <div id="keys-list"><div class="empty-state" style="color:var(--cyan);padding:3rem">NO API KEYS — Click "Generate New Key" to create your first one</div></div>
+</div>
+
+<!-- ████ API TESTER ████ -->
+<div class="page" id="page-api-tester">
+  <div style="margin-bottom:1rem">
+    <h2 style="font-family:'Orbitron',sans-serif;font-size:1.35rem;font-weight:900;color:var(--cyan)">API Tester</h2>
+    <p style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--dim);margin-top:3px">POST /api/anchor · Full pipeline including triage, XAI, agentic mitigation</p>
+  </div>
+  <div class="api-grid">
+    <!-- Request panel -->
+    <div class="panel" style="padding:1rem">
+      <div style="font-family:'Orbitron',sans-serif;font-size:0.68rem;color:var(--green);letter-spacing:0.1em;margin-bottom:0.85rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)">Request Builder</div>
+      <div class="presets" id="preset-btns"></div>
+      <div class="field-group">
+        <label class="field-label">x-api-key</label>
+        <input type="text" class="cy-input" id="t-key" placeholder="gz_… (create one in API Keys tab)">
+      </div>
+      <div class="field-group">
+        <label class="field-label">app_id</label>
+        <input type="text" class="cy-input" id="t-app" value="my-app">
+      </div>
+      <div class="field-group">
+        <label class="field-label">user_id</label>
+        <input type="text" class="cy-input" id="t-user" value="user_1">
+      </div>
+      <div class="field-group">
+        <label class="field-label">entity_id <span style="color:rgba(0,255,136,0.35)">// same ID = delta check</span></label>
+        <input type="text" class="cy-input" id="t-entity" value="employee-42">
+      </div>
+      <div class="field-group">
+        <label class="field-label">data_payload (JSON)</label>
+        <textarea class="cy-input cy-textarea" id="t-payload">{"salary": 55000}</textarea>
+        <div id="t-parse-err" style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--red);margin-top:3px;display:none"></div>
+      </div>
+      <button class="btn btn-g btn-full" onclick="sendApiRequest()">▶ SEND REQUEST</button>
+    </div>
+
+    <!-- Response panel -->
+    <div class="panel" style="padding:1rem">
+      <div id="res-title" style="font-family:'Orbitron',sans-serif;font-size:0.68rem;color:var(--green);letter-spacing:0.1em;margin-bottom:0.85rem;padding-bottom:0.6rem;border-bottom:1px solid var(--border)">Response</div>
+
+      <!-- Self-heal banner (hidden until triggered) -->
+      <div id="res-heal-banner" style="display:none" class="heal-banner">
+        <span class="heal-icon">🛡</span>
+        <div class="heal-text" id="res-heal-detail">AGENTIC ROLLBACK TRIGGERED</div>
+      </div>
+
+      <!-- Fraud banner -->
+      <div id="res-fraud-banner" style="display:none;padding:0.65rem;background:rgba(255,0,60,0.07);border:1px solid rgba(255,0,60,0.25);margin-bottom:0.65rem">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:var(--red);font-weight:700">⚠ FRAUD DETECTED</div>
+        <div id="res-fraud-detail" style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--dim);margin-top:3px"></div>
+      </div>
+
+      <!-- XAI attribution bars (shown for flagged records) -->
+      <div id="res-xai-section" style="display:none;margin-bottom:0.75rem">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.57rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--dim);margin-bottom:6px">XAI Risk Attribution (SHAP-style)</div>
+        <div id="res-xai-bars"></div>
+      </div>
+
+      <!-- Blockchain badge -->
+      <div id="res-bc-badge" style="display:none;margin-bottom:8px">
+        <span class="bc-badge"><span class="bc-dot"></span> BLOCKCHAIN VERIFIED · <span id="res-bc-root"></span></span>
+      </div>
+
+      <pre class="response-box" id="res-box">// Waiting for request…
+// Create an API key first, then send a request</pre>
+
+      <div id="res-pills" style="display:none;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin-top:0.65rem">
+        <div style="border:1px solid var(--border);padding:0.45rem;text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.55rem;color:var(--dim)">FLAGGED</div>
+          <div id="pill-flag" style="font-family:'Share Tech Mono',monospace;font-size:0.72rem;font-weight:700;margin-top:2px;color:var(--green)">-</div>
+        </div>
+        <div style="border:1px solid var(--border);padding:0.45rem;text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.55rem;color:var(--dim)">RISK</div>
+          <div id="pill-risk" style="font-family:'Share Tech Mono',monospace;font-size:0.72rem;font-weight:700;margin-top:2px;color:var(--green)">-</div>
+        </div>
+        <div style="border:1px solid var(--border);padding:0.45rem;text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.55rem;color:var(--dim)">TRIAGE</div>
+          <div id="pill-triage" style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;font-weight:700;margin-top:2px;color:var(--green)">-</div>
+        </div>
+        <div style="border:1px solid var(--border);padding:0.45rem;text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.55rem;color:var(--dim)">LATENCY</div>
+          <div id="pill-latency" style="font-family:'Share Tech Mono',monospace;font-size:0.72rem;font-weight:700;margin-top:2px;color:var(--cyan)">-</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ████ RESEARCH ████ -->
+<div class="page" id="page-research">
+  <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem">
+    <div>
+      <h2 style="font-family:'Orbitron',sans-serif;font-size:1.35rem;font-weight:900;color:var(--violet)">Research Metrics</h2>
+      <p style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--dim);margin-top:3px">GET /api/dashboard/research-data — SCOPUS-publication-ready data tables</p>
+    </div>
+    <div style="display:flex;gap:0.5rem">
+      <button class="btn btn-v" onclick="refreshResearch()">↻ Refresh</button>
+      <button class="btn btn-g" onclick="copyResearchJson()">⬇ Copy JSON</button>
+    </div>
+  </div>
+
+  <!-- Classification metrics -->
+  <div class="research-grid">
+    <div class="panel metric-card violet">
+      <div class="metric-label">F1 Score</div>
+      <div class="metric-val" id="r-f1" style="color:var(--violet)">—</div>
+    </div>
+    <div class="panel metric-card violet">
+      <div class="metric-label">Precision</div>
+      <div class="metric-val" id="r-prec" style="color:var(--green)">—</div>
+    </div>
+    <div class="panel metric-card violet">
+      <div class="metric-label">Recall</div>
+      <div class="metric-val" id="r-rec" style="color:var(--cyan)">—</div>
+    </div>
+    <div class="panel metric-card violet">
+      <div class="metric-label">Accuracy</div>
+      <div class="metric-val" id="r-acc" style="color:var(--yellow)">—</div>
+    </div>
+  </div>
+
+  <div class="research-grid-2">
+    <!-- Latency + triage -->
+    <div class="panel" style="padding:1.1rem">
+      <div class="ph-title" style="margin-bottom:0.85rem">Latency Metrics</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.6rem;margin-bottom:0.85rem">
+        <div><div style="font-family:'Share Tech Mono',monospace;font-size:0.56rem;color:var(--dim)">AVG (ms)</div><div id="r-avg" style="font-family:'Orbitron',sans-serif;font-size:1.4rem;font-weight:900;color:var(--cyan)">—</div></div>
+        <div><div style="font-family:'Share Tech Mono',monospace;font-size:0.56rem;color:var(--dim)">P95 (ms)</div><div id="r-p95" style="font-family:'Orbitron',sans-serif;font-size:1.4rem;font-weight:900;color:var(--cyan)">—</div></div>
+      </div>
+      <div class="ph-title" style="margin-bottom:0.75rem;margin-top:0.5rem">Triage Distribution</div>
+      <div id="r-triage-bars">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--dim)">No data yet</div>
+      </div>
+      <div style="margin-top:0.75rem;font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--dim)">
+        Audit skip rate: <span id="r-skip-rate" style="color:var(--green)">—</span>
+        <span style="margin-left:6px;color:rgba(0,255,136,0.4)">(ROUTINE records skip full semantic audit)</span>
+      </div>
+    </div>
+
+    <!-- Blockchain summary -->
+    <div class="panel" style="padding:1.1rem">
+      <div class="ph-title cyan" style="margin-bottom:0.85rem">Blockchain Anchoring</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.6rem;margin-bottom:0.85rem">
+        <div><div style="font-family:'Share Tech Mono',monospace;font-size:0.56rem;color:var(--dim)">Batches</div><div id="r-bc-batches" style="font-family:'Orbitron',sans-serif;font-size:1.4rem;font-weight:900;color:var(--cyan)">—</div></div>
+        <div><div style="font-family:'Share Tech Mono',monospace;font-size:0.56rem;color:var(--dim)">Verified</div><div id="r-bc-verified" style="font-family:'Orbitron',sans-serif;font-size:1.4rem;font-weight:900;color:var(--cyan)">—</div></div>
+      </div>
+      <div class="ph-title" style="margin-bottom:0.5rem">Confusion Matrix</div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.4rem">
+        <div style="border:1px solid rgba(0,255,136,0.15);padding:0.5rem;text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.54rem;color:var(--dim)">TP</div>
+          <div id="r-tp" style="font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;color:var(--green)">—</div>
+        </div>
+        <div style="border:1px solid rgba(255,200,0,0.2);padding:0.5rem;text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.54rem;color:var(--dim)">FP</div>
+          <div id="r-fp" style="font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;color:var(--yellow)">—</div>
+        </div>
+        <div style="border:1px solid rgba(255,200,0,0.2);padding:0.5rem;text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.54rem;color:var(--dim)">FN</div>
+          <div id="r-fn" style="font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;color:var(--yellow)">—</div>
+        </div>
+        <div style="border:1px solid rgba(0,255,136,0.15);padding:0.5rem;text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:0.54rem;color:var(--dim)">TN</div>
+          <div id="r-tn" style="font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;color:var(--green)">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Raw JSON -->
+  <div class="panel violet">
+    <div class="ph"><div class="ph-title violet">Raw JSON — /api/dashboard/research-data</div></div>
+    <pre class="json-box" id="r-json">// Click ↻ Refresh — or POST some anchors first to populate metrics</pre>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this&&!newKey)closeModal()">
+  <div class="modal">
+    <div id="modal-create" style="display:block">
+      <div class="modal-title">⚡ Generate API Key</div>
+      <div class="field-group">
+        <label class="field-label">Key Name</label>
+        <input type="text" class="cy-input" id="new-key-name" placeholder="My Application">
+      </div>
+      <div class="field-group" style="margin-top:0.75rem">
+        <label class="field-label">App ID <span style="color:var(--dim)">(short, no spaces)</span></label>
+        <input type="text" class="cy-input" id="new-key-app" placeholder="my-app">
+      </div>
+      <div style="display:flex;gap:0.5rem;margin-top:1.25rem">
+        <button class="btn btn-g" style="flex:1" onclick="createKey()">Generate Key</button>
+        <button class="btn" style="border-color:var(--dim);color:var(--dim)" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+    <div id="modal-reveal" style="display:none">
+      <div class="modal-title" style="color:var(--green)">✓ Key Generated!</div>
+      <p style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--red);margin-bottom:0.5rem;line-height:1.6">⚠ COPY THIS KEY NOW — it will not be shown again in full.</p>
+      <div class="key-reveal" id="modal-key-value">
+        <button class="copy-key-btn" onclick="copyNewKey()">Copy</button>
+        <span id="full-key-text"></span>
+      </div>
+      <p style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--dim);line-height:1.7;margin-bottom:1rem">
+        Use in the <span style="color:var(--cyan)">x-api-key</span> header of every <span style="color:var(--cyan)">/api/anchor</span> request.
+      </p>
+      <button class="btn btn-g btn-full" onclick="closeModal()">Done — I've saved my key</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────
+let allAnchors=[], allIncidents=[], allKeys=[], newKey=null, researchCache=null;
+let stats={totalRequests:0,flaggedIncidents:0,trustScore:100,selfHealedCount:0,blockchainVerifiedCount:0,merkleBatchCount:0,requestsHistory:[]};
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function showToast(msg,isErr=false){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast'+(isErr?' err':'')+' show';
+  setTimeout(()=>t.className='toast',2800);
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(id==='api-keys')renderKeys();
+  if(id==='incidents')renderIncidentsTable();
+  if(id==='blockchain')renderBlockchain();
+  if(id==='research')refreshResearch();
+}
+
+// ── Clock ─────────────────────────────────────────────────────────────────
+setInterval(()=>document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false}),1000);
+document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});
+
+// ── Gauge ─────────────────────────────────────────────────────────────────
+function updateGauge(score){
+  const color=score>=80?'var(--green)':score>=50?'var(--yellow)':'var(--red)';
+  const label=score>=80?'SECURE':score>=50?'CAUTION':'CRITICAL';
+  const glow =score>=80?'rgba(0,255,136,0.5)':score>=50?'rgba(255,200,0,0.5)':'rgba(255,0,60,0.5)';
+  const circ=2*Math.PI*48;
+  const arc=document.getElementById('gauge-arc');
+  arc.setAttribute('stroke-dasharray',`${(score/100)*circ} ${circ}`);
+  arc.setAttribute('stroke',color);
+  arc.style.filter=`drop-shadow(0 0 6px ${glow})`;
+  document.getElementById('gauge-val').textContent=score;
+  document.getElementById('gauge-val').style.color=color;
+  const gl=document.getElementById('gauge-label'); gl.textContent=label; gl.style.color=color;
+  document.getElementById('s-trust').textContent=score;
+  document.getElementById('s-trust').style.color=color;
+  const segs=document.getElementById('s-segs'); segs.innerHTML='';
+  for(let i=0;i<10;i++){
+    const s=document.createElement('div'); s.className='seg';
+    const on=i<Math.round(score/10);
+    s.style.background=on?color:'rgba(255,255,255,0.05)';
+    if(on)s.style.boxShadow=`0 0 3px ${color}`;
+    segs.appendChild(s);
+  }
+}
+
+// ── Fetch stats ───────────────────────────────────────────────────────────
+async function fetchStats(){
+  try{
+    const r=await fetch('/api/dashboard/stats'); stats=await r.json();
+    updateGauge(stats.trustScore??100);
+    document.getElementById('s-total').textContent=stats.totalRequests??0;
+    const fl=stats.flaggedIncidents??0;
+    document.getElementById('s-flag').textContent=fl;
+    document.getElementById('s-flag').style.color=fl>0?'var(--red)':'var(--green)';
+    document.getElementById('s-flag-sub').textContent=fl>0?`${fl} active threat${fl>1?'s':''}`:'System secure';
+    document.getElementById('s-bc').textContent=stats.blockchainVerifiedCount??0;
+    document.getElementById('s-bc-sub').textContent=(stats.merkleBatchCount??0)+' Merkle batches';
+    document.getElementById('s-healed').textContent=stats.selfHealedCount??0;
+    renderChart(stats.requestsHistory??[]);
+  }catch(e){}
+}
+
+// ── Recharts chart ────────────────────────────────────────────────────────
+function renderChart(data){
+  const c=document.getElementById('chart-container');
+  if(!c||!window.Recharts)return;
+  const {AreaChart,Area,XAxis,YAxis,Tooltip,ResponsiveContainer}=window.Recharts;
+  const e=React.createElement;
+  ReactDOM.render(
+    e(ResponsiveContainer,{width:'100%',height:155},
+      e(AreaChart,{data,margin:{top:4,right:8,bottom:0,left:-18}},
+        e('defs',null,e('linearGradient',{id:'cg',x1:'0',y1:'0',x2:'0',y2:'1'},
+          e('stop',{offset:'5%',stopColor:'#00ff88',stopOpacity:0.22}),
+          e('stop',{offset:'95%',stopColor:'#00ff88',stopOpacity:0}))),
+        e(XAxis,{dataKey:'time',tick:{fill:'rgba(180,220,200,0.35)',fontSize:8,fontFamily:'Share Tech Mono'},tickLine:false,axisLine:false}),
+        e(YAxis,{tick:{fill:'rgba(180,220,200,0.35)',fontSize:8,fontFamily:'Share Tech Mono'},tickLine:false,axisLine:false,width:26,allowDecimals:false}),
+        e(Tooltip,{contentStyle:{background:'rgba(8,13,26,0.97)',border:'1px solid rgba(0,255,136,0.2)',fontFamily:'Share Tech Mono',fontSize:10,color:'#00ff88'},itemStyle:{color:'#00ff88'},labelStyle:{color:'rgba(180,220,200,0.5)'}}),
+        e(Area,{type:'step',dataKey:'count',stroke:'#00ff88',fill:'url(#cg)',strokeWidth:2,dot:false,name:'anchors'}))),
+    c);
+}
+
+// ── Fetch feed & incidents ────────────────────────────────────────────────
+async function fetchFeed(){try{const r=await fetch('/api/dashboard/feed');allAnchors=await r.json();renderStream();}catch(e){}}
+async function fetchIncidents(){try{const r=await fetch('/api/dashboard/incidents');allIncidents=await r.json();renderIncidentPanel();renderIncidentsTable();}catch(e){}}
+
+// ── Triage badge ──────────────────────────────────────────────────────────
+function triageBadge(tc){
+  if(!tc) return '';
+  if(tc==='ROUTINE')   return '<span class="badge badge-g">ROUTINE</span>';
+  if(tc==='SUSPICIOUS')return '<span class="badge badge-y">SUSPICIOUS</span>';
+  return '<span class="badge badge-r" style="animation:pulse-g 0.8s infinite">CRITICAL</span>';
+}
+
+// ── XAI bar chart ─────────────────────────────────────────────────────────
+const XAI_COLORS=['#ff003c','#ff6b35','#ffc800','#9b59ff','#00f0ff'];
+function renderXaiBars(factors, container){
+  if(!factors||!factors.length){container.innerHTML='';return;}
+  const sorted=[...factors].sort((a,b)=>b.weight-a.weight);
+  container.innerHTML=sorted.map((f,i)=>`
+    <div class="xai-row" title="${escHtml(f.detail||'')}">
+      <div class="xai-label">${escHtml(f.name)}</div>
+      <div class="xai-track">
+        <div class="xai-fill" style="width:${f.weight}%;background:${XAI_COLORS[i%XAI_COLORS.length]}"></div>
+      </div>
+      <div class="xai-pct">${f.weight}%</div>
+    </div>`).join('');
+}
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── Stream ────────────────────────────────────────────────────────────────
+function renderStream(){
+  const list=document.getElementById('stream-list');
+  document.getElementById('stream-count').textContent=allAnchors.length+' records';
+  if(!allAnchors.length){
+    list.innerHTML='<div class="empty-state"><div>NO ANCHORS YET_</div><div style="font-size:0.57rem">Create an API key → POST data from your app</div></div>';
+    return;
+  }
+  list.innerHTML=allAnchors.slice(0,40).map(a=>{
+    const ts=a.createdAt||a.timestamp||'';
+    const time=ts?new Date(ts).toLocaleTimeString('en-US',{hour12:false}):'';
+    const pk=Object.keys(a.payload||{})[0]||''; const pv=a.payload?.[pk]??'';
+    const rowClass=a.selfHealed?'healed':a.isFlagged?'flagged':a.blockchainVerified?'verified':'';
+    const dotClass=a.selfHealed?'dot-v':a.isFlagged?'dot-r':'dot-g';
+    return `<div class="stream-row ${rowClass}">
+      <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;flex:1">
+        <div class="${dotClass}"></div>
+        <div style="min-width:0">
+          <div class="stream-hash${a.isFlagged&&!a.selfHealed?' red':''}">${(a.hash||'').slice(0,20)}…</div>
+          <div class="stream-meta">${a.entityId||a.appId||'-'} · ${pk}: <span style="color:${a.isFlagged?'var(--red)':'#d4f5e8'}">${pv}</span></div>
+          <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">
+            ${triageBadge(a.triageClass)}
+            ${a.blockchainVerified?'<span class="badge badge-c">⛓ VERIFIED</span>':''}
+            ${a.selfHealed?'<span class="badge badge-v">🛡 SELF-HEALED</span>':''}
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:6px;flex-shrink:0;margin-left:6px">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:0.56rem;color:var(--dim)">${time}</span>
+        ${a.isFlagged&&!a.selfHealed?'<span class="fraud-tag">⚠</span>':''}
+        <span class="badge ${a.selfHealed?'badge-v':a.isFlagged?'badge-r':'badge-g'}">${a.selfHealed?'HEALED':a.isFlagged?a.riskScore+'%':'SAFE'}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Incident panel (overview sidebar) ────────────────────────────────────
+function renderIncidentPanel(){
+  const cnt=allIncidents.length;
+  document.getElementById('inc-count').textContent=cnt+' flagged';
+  document.getElementById('inc-dot').style.display=cnt?'block':'none';
+  const list=document.getElementById('inc-list');
+  if(!cnt){
+    list.innerHTML='<div class="empty-state" style="color:var(--green)"><svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div>SYSTEM SECURE</div></div>';
+    return;
+  }
+  list.innerHTML=allIncidents.slice(0,8).map(i=>`
+    <div class="inc-row">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:4px">
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <span class="badge badge-r">RISK ${i.riskScore}%</span>
+          ${triageBadge(i.triageClass)}
+          ${i.blockchainVerified?'<span class="badge badge-c">⛓</span>':''}
+          ${i.selfHealed?'<span class="badge badge-v">🛡 HEALED</span>':''}
+        </div>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:0.54rem;color:var(--dim)">${i.createdAt?new Date(i.createdAt).toLocaleTimeString('en-US',{hour12:false}):''}</span>
+      </div>
+      <div class="inc-reason">${escHtml(i.flagReason||'Anomaly detected')}</div>
+      ${buildXaiSummary(i.xaiFactors)}
+      <div class="inc-meta">${i.entityId||''} · ${i.userId||''}</div>
+    </div>`).join('');
+}
+
+function buildXaiSummary(factors){
+  if(!factors||!factors.length)return '';
+  const top=[...factors].sort((a,b)=>b.weight-a.weight).slice(0,3);
+  return `<div class="xai-wrap">${top.map((f,idx)=>`
+    <div class="xai-row">
+      <div class="xai-label" style="width:90px;font-size:0.52rem">${escHtml(f.name)}</div>
+      <div class="xai-track"><div class="xai-fill" style="width:${f.weight}%;background:${XAI_COLORS[idx%5]}"></div></div>
+      <div class="xai-pct" style="font-size:0.52rem">${f.weight}%</div>
+    </div>`).join('')}</div>`;
+}
+
+// ── Incidents full table (Incidents page) ─────────────────────────────────
+function renderIncidentsTable(){
+  const q=(document.getElementById('inc-search')?.value||'').toLowerCase();
+  const filtered=allIncidents.filter(i=>!q||[i.entityId,i.userId,i.appId,i.flagReason].some(v=>v?.toLowerCase().includes(q)));
+  const tbody=document.getElementById('inc-tbody');
+  const empty=document.getElementById('inc-empty');
+  if(!filtered.length){if(tbody)tbody.innerHTML='';if(empty)empty.style.display='flex';return;}
+  if(empty)empty.style.display='none';
+  if(tbody) tbody.innerHTML=filtered.map(i=>`<tr>
+    <td style="color:var(--dim);white-space:nowrap">${i.createdAt?new Date(i.createdAt).toLocaleString():'-'}</td>
+    <td style="color:var(--red);font-weight:700">${i.entityId||'-'}</td>
+    <td>${i.userId||'-'}</td>
+    <td style="color:var(--dim)">${i.appId||'-'}</td>
+    <td>${triageBadge(i.triageClass)}</td>
+    <td><div style="width:50px;height:3px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;margin-bottom:3px"><div style="width:${i.riskScore}%;height:100%;background:var(--red)"></div></div><span style="color:var(--red)">${i.riskScore}%</span></td>
+    <td>${i.blockchainVerified?'<span class="badge badge-c">⛓ YES</span>':'-'}</td>
+    <td>${i.selfHealed?'<span class="badge badge-v">🛡 YES</span>':'-'}</td>
+    <td style="min-width:200px">${buildXaiSummary(i.xaiFactors)}</td>
+    <td style="color:var(--red);max-width:240px;line-height:1.5;font-size:0.58rem">${escHtml(i.flagReason||'Anomaly')}</td>
+  </tr>`).join('');
+}
+
+// ── Blockchain page ───────────────────────────────────────────────────────
+async function renderBlockchain(){
+  try{
+    const r=await fetch('/api/dashboard/merkle-batches');
+    const batches=await r.json();
+    document.getElementById('bc-batch-count').textContent=batches.length;
+    document.getElementById('bc-anchor-count').textContent=batches.reduce((s,b)=>s+(b.anchorIds?.length??0),0);
+    const list=document.getElementById('bc-list');
+    if(!batches.length){
+      list.innerHTML='<div class="empty-state" style="color:var(--cyan)">No batches yet — POST 10 anchors to trigger first commit</div>';
+      return;
+    }
+    list.innerHTML=batches.map(b=>`
+      <div style="padding:0.85rem 1.1rem;border-bottom:1px solid rgba(0,240,255,0.07)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span class="badge badge-c">Batch #${b.id}</span>
+            <span style="font-family:'Share Tech Mono',monospace;font-size:0.57rem;color:var(--dim)">${b.anchorIds?.length??0} anchors</span>
+          </div>
+          <span style="font-family:'Share Tech Mono',monospace;font-size:0.54rem;color:var(--dim)">${b.committedAt?new Date(b.committedAt).toLocaleString():''}</span>
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--cyan);word-break:break-all;margin-bottom:3px">
+          Root: ${b.merkleRoot||''}
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.57rem;color:var(--dim);word-break:break-all;margin-bottom:3px">
+          Tx: ${b.txHash||''}
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.54rem;color:rgba(0,240,255,0.4)">
+          ${b.network} · Anchors: [${(b.anchorIds||[]).join(', ')}]
+        </div>
+      </div>`).join('');
+  }catch(e){}
+}
+
+// ── Simulate fraud ────────────────────────────────────────────────────────
+async function simulateFraud(){
+  const btn=document.getElementById('sim-btn');
+  const val=Number(document.getElementById('sim-val').value)||98;
+  const field=document.getElementById('sim-field').value||'grade';
+  btn.disabled=true; btn.textContent='INJECTING…';
+  try{
+    const r=await fetch('/api/simulate-fraud',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({value:val,field})});
+    const d=await r.json();
+    if(d.error){showToast(d.error,true);return;}
+    document.getElementById('sim-result').style.display='block';
+    document.getElementById('sim-detail').textContent=`Risk:${d.anchor?.riskScore??'?'}% · Triage:${d.triageClass||'?'} · Hash:${(d.anchor?.hash||'').slice(0,14)}…`;
+    document.getElementById('sim-heal').style.display=d.selfHealed?'flex':'none';
+    await refresh();
+  }catch(e){showToast('Simulation failed',true);}
+  finally{btn.disabled=false;btn.textContent='⚠ SIMULATE ATTACK';}
+}
+document.getElementById('sim-val').addEventListener('input',function(){
+  const v=Number(this.value);
+  const bar=document.getElementById('sim-bar');
+  const pct=Math.min(100,Math.max(0,(v/99999)*100));
+  bar.style.width=pct+'%';
+  bar.style.background=v>90?'var(--red)':v>70?'var(--yellow)':'var(--green)';
+});
+
+// ── API Key management ────────────────────────────────────────────────────
+async function fetchKeys(){
+  try{
+    const r=await fetch('/api/keys'); allKeys=await r.json();
+    const active=allKeys.filter(k=>k.isActive).length;
+    document.getElementById('s-keys').textContent=allKeys.length;
+    document.getElementById('s-keys-sub').textContent=active>0?`${active} active`:'No active keys';
+  }catch(e){}
+}
+function openNewKeyModal(){
+  newKey=null;
+  document.getElementById('modal-create').style.display='block';
+  document.getElementById('modal-reveal').style.display='none';
+  document.getElementById('new-key-name').value='';
+  document.getElementById('new-key-app').value='';
+  document.getElementById('modal').style.display='flex';
+  setTimeout(()=>document.getElementById('new-key-name').focus(),100);
+}
+function closeModal(){document.getElementById('modal').style.display='none';newKey=null;renderKeys();}
+async function createKey(){
+  const name=document.getElementById('new-key-name').value.trim();
+  const appId=document.getElementById('new-key-app').value.trim().replace(/\s+/g,'-');
+  if(!name||!appId){showToast('Name and App ID required',true);return;}
+  try{
+    const r=await fetch('/api/keys',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,appId})});
+    const d=await r.json();
+    if(d.error){showToast(d.error,true);return;}
+    newKey=d;
+    document.getElementById('full-key-text').textContent=d.key;
+    document.getElementById('modal-create').style.display='none';
+    document.getElementById('modal-reveal').style.display='block';
+    document.getElementById('t-key').value=d.key;
+    document.getElementById('t-app').value=d.appId;
+    await fetchKeys();
+  }catch(e){showToast('Failed to create key',true);}
+}
+function copyNewKey(){
+  const key=document.getElementById('full-key-text').textContent;
+  navigator.clipboard.writeText(key).then(()=>{
+    const btn=document.querySelector('.copy-key-btn');
+    btn.textContent='Copied!'; setTimeout(()=>btn.textContent='Copy',2000);
+    showToast('Key copied!');
+  });
+}
+async function revokeKey(key){
+  if(!confirm('Revoke this key? Requests using it will fail immediately.'))return;
+  await fetch('/api/keys/'+encodeURIComponent(key),{method:'DELETE'});
+  showToast('Key revoked');await fetchKeys();renderKeys();
+}
+async function deleteKey(key){
+  if(!confirm('Permanently DELETE this key?'))return;
+  await fetch('/api/keys/'+encodeURIComponent(key)+'/permanent',{method:'DELETE'});
+  showToast('Key deleted');await fetchKeys();renderKeys();
+}
+function renderKeys(){
+  const el=document.getElementById('keys-list');
+  if(!el)return;
+  if(!allKeys.length){el.innerHTML='<div class="empty-state" style="color:var(--cyan);padding:3rem">NO API KEYS — Click "Generate New Key" to create your first one</div>';return;}
+  el.innerHTML='<div class="keys-grid">'+allKeys.map(k=>`
+    <div class="key-card${k.isActive?'':' revoked'}">
+      <div style="flex:1;min-width:0">
+        <div class="key-name">${escHtml(k.name)}</div>
+        <div class="key-app">${escHtml(k.appId)}</div>
+        <div class="key-preview">${k.keyPreview||('gz_••••••••••••••••••••'+(k.key||'').slice(-6))}</div>
+        <div class="key-meta">Created ${k.createdAt?new Date(k.createdAt).toLocaleString():'-'}</div>
+        <div style="margin-top:4px">${k.isActive?'<span style="font-family:\'Share Tech Mono\',monospace;font-size:0.57rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--green)">● ACTIVE</span>':'<span style="font-family:\'Share Tech Mono\',monospace;font-size:0.57rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--red)">✕ REVOKED</span>'}</div>
+      </div>
+      <div class="key-actions">
+        ${k.isActive?`<button class="btn btn-sm btn-r" onclick="revokeKey('${k.key}')">Revoke</button>`:''}
+        <button class="btn btn-sm" style="border-color:rgba(255,0,60,0.4);color:rgba(255,0,60,0.6)" onclick="deleteKey('${k.key}')">Delete</button>
+      </div>
+    </div>`).join('')+'</div>';
+}
+
+// ── API Tester presets ────────────────────────────────────────────────────
+const PRESETS=[
+  {label:'Safe',        user:'user_1',      entity:'employee-42', payload:'{"salary": 55000}',    cls:''},
+  {label:'Δ >50%',     user:'user_1',      entity:'employee-42', payload:'{"salary": 98000}',    cls:''},
+  {label:'Abs >90',    user:'admin',       entity:'record-99',   payload:'{"score": 95}',         cls:''},
+  {label:'Role Change',user:'hr_admin',    entity:'employee-42', payload:'{"role": "admin"}',     cls:''},
+  {label:'⚠ Simulate Attack',user:'ATTACKER',entity:'target-sys',payload:'{"salary":999999,"role":"super_admin","access_level":99}',cls:'attack-btn'},
+];
+(function buildPresets(){
+  const el=document.getElementById('preset-btns'); if(!el)return;
+  el.innerHTML=PRESETS.map((p,i)=>`<button class="preset-btn ${p.cls}" onclick="applyPreset(${i})">${p.label}</button>`).join('');
+})();
+function applyPreset(i){
+  const p=PRESETS[i];
+  document.getElementById('t-user').value=p.user;
+  document.getElementById('t-entity').value=p.entity;
+  document.getElementById('t-payload').value=p.payload;
+}
+
+// ── API Tester send ───────────────────────────────────────────────────────
+async function sendApiRequest(){
+  const errEl=document.getElementById('t-parse-err'); errEl.style.display='none';
+  let payload;
+  try{payload=JSON.parse(document.getElementById('t-payload').value);}
+  catch{errEl.textContent='⚠ Invalid JSON';errEl.style.display='block';return;}
+  const resBox=document.getElementById('res-box');
+  const resTitle=document.getElementById('res-title');
+  resBox.textContent='Sending…'; resBox.className='response-box';
+  document.getElementById('res-heal-banner').style.display='none';
+  document.getElementById('res-fraud-banner').style.display='none';
+  document.getElementById('res-xai-section').style.display='none';
+  document.getElementById('res-bc-badge').style.display='none';
+  try{
+    const r=await fetch('/api/anchor',{method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':document.getElementById('t-key').value},
+      body:JSON.stringify({
+        app_id:document.getElementById('t-app').value,
+        user_id:document.getElementById('t-user').value,
+        entity_id:document.getElementById('t-entity').value,
+        data_payload:payload,
+        timestamp:new Date().toISOString()
+      })});
+    const d=await r.json();
+    resBox.textContent=JSON.stringify(d,null,2);
+
+    // Self-heal banner
+    if(d.selfHealed){
+      const hb=document.getElementById('res-heal-banner'); hb.style.display='flex';
+      document.getElementById('res-heal-detail').textContent=
+        `🛡 AGENTIC ROLLBACK TRIGGERED — ${d.webhookResult||'Entity reverted to safe state'}`;
+      resBox.className='response-box healed';
+      resTitle.style.color='var(--violet)'; resTitle.textContent='🛡 SELF-HEALED — Agentic Rollback Executed';
+    } else if(d.isFlagged){
+      document.getElementById('res-fraud-banner').style.display='block';
+      document.getElementById('res-fraud-detail').textContent=`Risk: ${d.riskScore}% · Triage: ${d.triageClass||'-'} · ${d.message||''}`;
+      resBox.className='response-box fraud';
+      resTitle.style.color='var(--red)'; resTitle.textContent='⚠ FRAUD DETECTED — Response';
+    } else if(d.error){
+      resBox.className='response-box err';
+      resTitle.style.color='var(--red)'; resTitle.textContent='ERROR';
+    } else {
+      resBox.className='response-box';
+      resTitle.style.color='var(--green)'; resTitle.textContent='✓ Response 201';
+    }
+
+    // XAI bars (shown when flagged or any risk)
+    if(d.xaiFactors&&d.xaiFactors.length>0&&(d.isFlagged||d.selfHealed)){
+      document.getElementById('res-xai-section').style.display='block';
+      renderXaiBars(d.xaiFactors,document.getElementById('res-xai-bars'));
+    }
+
+    // Blockchain badge
+    if(d.blockchainVerified&&d.merkleRoot){
+      document.getElementById('res-bc-badge').style.display='block';
+      document.getElementById('res-bc-root').textContent=d.merkleRoot.slice(0,16)+'…';
+    }
+
+    // Pills
+    const pills=document.getElementById('res-pills'); pills.style.display='grid';
+    document.getElementById('pill-flag').textContent=d.isFlagged?'YES':'NO';
+    document.getElementById('pill-flag').style.color=d.isFlagged?'var(--red)':'var(--green)';
+    document.getElementById('pill-risk').textContent=(d.riskScore??0)+'%';
+    document.getElementById('pill-risk').style.color=(d.riskScore??0)>50?'var(--red)':'var(--green)';
+    const tc=d.triageClass||'-';
+    document.getElementById('pill-triage').textContent=tc;
+    document.getElementById('pill-triage').style.color=tc==='CRITICAL'?'var(--red)':tc==='SUSPICIOUS'?'var(--yellow)':'var(--green)';
+    document.getElementById('pill-latency').textContent=(d.latencyMs!=null?d.latencyMs+'ms':'-');
+    await refresh();
+  }catch(e){resBox.textContent='Error: '+e.message;resBox.className='response-box err';}
+}
+
+// ── SDK tabs ──────────────────────────────────────────────────────────────
+function switchSdk(lang){
+  document.querySelectorAll('.sdk-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.sdk-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`.sdk-tab[onclick="switchSdk('${lang}')"]`).classList.add('active');
+  const panel=document.getElementById('sdk-'+lang);
+  if(panel)panel.classList.add('active');
+}
+
+// ── Research page ─────────────────────────────────────────────────────────
+async function refreshResearch(){
+  try{
+    const r=await fetch('/api/dashboard/research-data');
+    researchCache=await r.json();
+    const m=researchCache.classification_metrics||{};
+    const l=researchCache.latency_metrics||{};
+    const t=researchCache.triage_distribution||{};
+    const bc=researchCache.blockchain_metrics||{};
+    // Key metrics
+    document.getElementById('r-f1').textContent=m.f1_score!=null?m.f1_score.toFixed(4):'—';
+    document.getElementById('r-prec').textContent=m.precision!=null?m.precision.toFixed(4):'—';
+    document.getElementById('r-rec').textContent=m.recall!=null?m.recall.toFixed(4):'—';
+    document.getElementById('r-acc').textContent=m.accuracy!=null?m.accuracy.toFixed(4):'—';
+    document.getElementById('r-avg').textContent=l.avg_ms!=null?l.avg_ms.toFixed(1):'—';
+    document.getElementById('r-p95').textContent=l.p95_ms!=null?l.p95_ms.toFixed(1):'—';
+    document.getElementById('r-tp').textContent=m.true_positives??'—';
+    document.getElementById('r-fp').textContent=m.false_positives??'—';
+    document.getElementById('r-fn').textContent=m.false_negatives??'—';
+    document.getElementById('r-tn').textContent=m.true_negatives??'—';
+    document.getElementById('r-bc-batches').textContent=bc.batches_committed??'—';
+    document.getElementById('r-bc-verified').textContent=bc.total_anchors_verified??'—';
+    document.getElementById('r-skip-rate').textContent=(t.audit_skip_rate_pct!=null?t.audit_skip_rate_pct+'%':'—');
+    // Triage bars
+    const total=(t.ROUTINE?.count||0)+(t.SUSPICIOUS?.count||0)+(t.CRITICAL?.count||0)||1;
+    const tBars=[
+      {label:'ROUTINE',   count:t.ROUTINE?.count||0,   color:'var(--green)'},
+      {label:'SUSPICIOUS',count:t.SUSPICIOUS?.count||0, color:'var(--yellow)'},
+      {label:'CRITICAL',  count:t.CRITICAL?.count||0,   color:'var(--red)'},
+    ];
+    document.getElementById('r-triage-bars').innerHTML=tBars.map(b=>`
+      <div class="xai-row" style="margin-bottom:6px">
+        <div class="xai-label" style="width:90px;font-size:0.56rem">${b.label}</div>
+        <div class="xai-track"><div class="xai-fill" style="width:${(b.count/total*100).toFixed(1)}%;background:${b.color}"></div></div>
+        <div class="xai-pct" style="width:36px;font-size:0.56rem">${b.count}</div>
+      </div>`).join('');
+    // Raw JSON
+    document.getElementById('r-json').textContent=JSON.stringify(researchCache,null,2);
+  }catch(e){
+    document.getElementById('r-json').textContent='Error: '+e.message;
+  }
+}
+function copyResearchJson(){
+  if(!researchCache){showToast('No data yet — refresh first',true);return;}
+  navigator.clipboard.writeText(JSON.stringify(researchCache,null,2)).then(()=>showToast('Research JSON copied!'));
+}
+
+// ── Poll ──────────────────────────────────────────────────────────────────
+async function refresh(){
+  await Promise.all([fetchStats(),fetchFeed(),fetchIncidents(),fetchKeys()]);
+}
+refresh();
+setInterval(refresh,2500);
+</script>
+</body>
+</html>
